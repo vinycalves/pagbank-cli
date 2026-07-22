@@ -25,10 +25,9 @@ name = "pb"
 license = "MIT"
 summary = "CLI para as APIs do PagBank"
 description = "CLI completa em Rust para as APIs do PagBank"
-# TODO: pre-build systemd integration
-# assets = [
-#   { source = "target/release/pb", dest = "/usr/bin/pb" },
-# ]
+assets = [
+  { source = "../target/release/pb", dest = "/usr/bin/pb", mode = "755" },
+]
 
 [dependencies]
 pagbank-sdk = { path = "../sdk" }
