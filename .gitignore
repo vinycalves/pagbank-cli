@@ -1,0 +1,14 @@
+/target
+/graphify-out
+Cargo.lock
+
+*.swp
+*.swo
+*~
+
+.DS_Store
+Thumbs.db
+
+.env
+*.pem
+*.key

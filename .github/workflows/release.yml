@@ -1,0 +1,250 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+      - run: cargo check --workspace
+      - run: cargo test --workspace
+
+  publish-sdk:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+      - run: cargo publish -p pagbank-sdk --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  publish-cli:
+    needs: publish-sdk
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+      - name: Switch SDK dependency to crates.io
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s|path = \"../sdk\"|version = \"$VERSION\"|" cli/Cargo.toml
+      - run: cargo publish -p pb --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  build:
+    needs: publish-cli
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ""
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            suffix: ""
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: ""
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            suffix: ""
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: ".exe"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+          rustflags: ""
+
+      - name: Install cross-compilation deps (Linux aarch64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build release
+        run: cargo build --release --target ${{ matrix.target }} -p pb
+
+      - name: Package binary
+        shell: bash
+        run: |
+          cd "target/${{ matrix.target }}/release"
+          tar czf "pb-${{ matrix.target }}.tar.gz" "pb${{ matrix.suffix }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pb-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/pb-${{ matrix.target }}.tar.gz
+
+  build-packages:
+    needs: publish-cli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+      - name: Install cargo-generate-rpm
+        run: cargo install cargo-generate-rpm
+      - name: Build .deb
+        run: cargo deb -p pb --target x86_64-unknown-linux-gnu
+      - name: Build .rpm
+        run: cargo generate-rpm -p pb --target x86_64-unknown-linux-gnu
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: |
+            target/x86_64-unknown-linux-gnu/release/*.deb
+            target/x86_64-unknown-linux-gnu/release/*.rpm
+
+  create-release:
+    needs: [build, build-packages]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+    steps:
+      - id: vars
+        run: echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.vars.outputs.tag }}" \
+            --title "${{ steps.vars.outputs.tag }}" \
+            --notes "Release ${{ steps.vars.outputs.tag }}" \
+            --generate-notes
+
+  upload:
+    needs: create-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pb-${{ matrix.target }}
+          path: ./assets
+      - name: Upload binary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ needs.create-release.outputs.tag }}" \
+            ./assets/* --clobber
+
+  upload-packages:
+    needs: create-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: ./assets
+      - name: Upload packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ needs.create-release.outputs.tag }}" \
+            ./assets/* --clobber
+
+  aur:
+    needs: create-release
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'vinycius'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate PKGBUILD from template
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${{ needs.create-release.outputs.tag }}"
+
+          for arch in x86_64 aarch64; do
+            url="https://github.com/${{ github.repository }}/releases/download/${TAG}/pb-${arch}-unknown-linux-gnu.tar.gz"
+            sha=$(curl -sL "$url" | sha256sum | cut -d' ' -f1)
+            sed -i "s/__SHA256SUM_$(echo $arch | tr 'a-z' 'A-Z')__/$sha/" dist/aur/PKGBUILD
+          done
+          sed -i "s/__VERSION__/$VERSION/" dist/aur/PKGBUILD
+
+      - name: Push to AUR
+        env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+        if: env.AUR_SSH_KEY != ''
+        run: |
+          mkdir -p ~/.ssh
+          echo "$AUR_SSH_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          printf "Host aur.archlinux.org\n  StrictHostKeyChecking accept-new\n" > ~/.ssh/config
+          git clone "ssh://aur@aur.archlinux.org/pagbank-cli-bin.git" /tmp/aur-repo
+          cp dist/aur/PKGBUILD /tmp/aur-repo/
+          cd /tmp/aur-repo
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git diff --quiet || {
+            git add PKGBUILD .SRCINFO 2>/dev/null || git add PKGBUILD
+            git commit -m "Update pagbank-cli-bin to v$VERSION"
+            git push
+          }
+
+  homebrew:
+    needs: create-release
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'vinycius'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate formula from template
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${{ needs.create-release.outputs.tag }}"
+
+          for pair in "AARCH64_DARWIN aarch64-apple-darwin" "X86_64_DARWIN x86_64-apple-darwin" "AARCH64_LINUX aarch64-unknown-linux-gnu" "X86_64_LINUX x86_64-unknown-linux-gnu"; do
+            set -- $pair
+            key=$1; target=$2
+            url="https://github.com/${{ github.repository }}/releases/download/${TAG}/pb-${target}.tar.gz"
+            sha=$(curl -sL "$url" | sha256sum | cut -d' ' -f1)
+            sed -i "s/__SHA_${key}__/$sha/" dist/homebrew/pb.rb
+          done
+          sed -i "s/__VERSION__/$VERSION/" dist/homebrew/pb.rb
+
+      - name: Push to Homebrew tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        if: env.HOMEBREW_TAP_TOKEN != ''
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/vinycius/homebrew-tap.git" /tmp/homebrew-tap
+          cp dist/homebrew/pb.rb /tmp/homebrew-tap/Formula/
+          cd /tmp/homebrew-tap
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git diff --quiet || {
+            git add Formula/pb.rb
+            git commit -m "pb v$VERSION"
+            git push
+          }

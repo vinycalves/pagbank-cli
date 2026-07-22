@@ -1,0 +1,52 @@
+[package]
+name = "pb"
+description = "CLI para as APIs do PagBank"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+keywords = ["pagbank", "pagseguro", "cli", "payments", "brasil"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "pb"
+path = "src/main.rs"
+
+[package.metadata.deb]
+maintainer = "Vinycius <vinycius@users.noreply.github.com>"
+copyright = "2026 Vinycius"
+license-file = ["../LICENSE", "MIT"]
+extended-description = "CLI completa em Rust para as APIs do PagBank"
+section = "utils"
+priority = "optional"
+# TODO: pre-build systemd integration
+# assets = [
+#   ["target/release/pb", "usr/bin/", "755"],
+# ]
+
+[package.metadata.generate-rpm]
+name = "pb"
+license = "MIT"
+summary = "CLI para as APIs do PagBank"
+description = "CLI completa em Rust para as APIs do PagBank"
+# TODO: pre-build systemd integration
+# assets = [
+#   { source = "target/release/pb", dest = "/usr/bin/pb" },
+# ]
+
+[dependencies]
+pagbank-sdk = { path = "../sdk" }
+clap = { version = "4", features = ["derive"] }
+comfy-table = "7"
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml = "0.8"
+dirs = "6"
+anyhow = "1"
+colored = "3"
+dialoguer = "0.11"
+qrcode = "0.14"
+sha2 = "0.10"
+urlencoding = "2"

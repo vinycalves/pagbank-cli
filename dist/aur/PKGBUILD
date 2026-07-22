@@ -1,0 +1,19 @@
+# Maintainer: Vinycius <vinycius@users.noreply.github.com>
+
+pkgname=pagbank-cli-bin
+pkgver=__VERSION__
+pkgrel=1
+pkgdesc="CLI completa em Rust para as APIs do PagBank"
+arch=('x86_64' 'aarch64')
+url="https://github.com/vinycius/pagbank-cli"
+license=('MIT')
+provides=('pb')
+conflicts=('pb')
+source_x86_64=("${url}/releases/download/v${pkgver}/pb-x86_64-unknown-linux-gnu.tar.gz")
+source_aarch64=("${url}/releases/download/v${pkgver}/pb-aarch64-unknown-linux-gnu.tar.gz")
+sha256sums_x86_64=('__SHA256SUM_X86_64__')
+sha256sums_aarch64=('__SHA256SUM_AARCH64__')
+
+package() {
+    install -Dm755 pb "${pkgdir}/usr/bin/pb"
+}
