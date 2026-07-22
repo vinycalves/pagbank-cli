@@ -45,19 +45,23 @@ chore: atualizar dependências
 
 ## Release
 
+A versão do CLI (`pb --version`) é definida em `Cargo.toml`. A tag deve ser igual.
+
 ```bash
-# 1. Garantir que main está atualizada
-git checkout main && git pull
+# Automático (recomendado)
+./scripts/release.sh 0.2.0
 
-# 2. Decidir versão (semver)
-#    v0.1.0 -> v0.2.0 (minor: novas funcionalidades)
-#    v0.1.0 -> v0.1.1 (patch: bug fixes)
+# Revisar, depois push:
+git push origin main --follow-tags
 
-# 3. Criar tag e push
-git tag v0.2.0 && git push origin v0.2.0
+# Ou manual:
+# 1. git checkout main && git pull
+# 2. Atualizar versão em Cargo.toml e CHANGELOG.md
+# 3. git add -A && git commit -m "chore: bump para v0.2.0"
+# 4. git tag v0.2.0 && git push origin v0.2.0
 ```
 
-O GitHub Actions faz todo o resto automaticamente.
+O GitHub Actions valida que a tag bate com o `Cargo.toml`. Se não bater, a pipeline falha.
 
 ## Pré-push Hook
 

@@ -14,6 +14,19 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rustflags: ""
+      - name: Validate version tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          CARGO_VERSION="$(grep '^version = ' Cargo.toml | head -1 | cut -d'"' -f2)"
+          if [ "$TAG_VERSION" != "$CARGO_VERSION" ]; then
+            echo "ERRO: tag v$TAG_VERSION não bate com Cargo.toml (v$CARGO_VERSION)"
+            echo "Antes de criar a tag, atualize a versão em Cargo.toml:"
+            echo "  sed -i 's/version = \"$CARGO_VERSION\"/version = \"$TAG_VERSION\"/' Cargo.toml"
+            echo "  git add -A && git commit -m \"chore: bump para v$TAG_VERSION\""
+            echo "  git tag v$TAG_VERSION && git push origin v$TAG_VERSION"
+            exit 1
+          fi
+          echo "✓ Versão $TAG_VERSION confere com Cargo.toml"
       - run: cargo fmt --all -- --check
       - run: cargo check --workspace
       - run: cargo test --workspace
@@ -271,7 +284,7 @@ jobs:
             exit 0
           fi
           VERSION="${GITHUB_REF_NAME#v}"
-          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/vinycius/homebrew-tap.git" /tmp/homebrew-tap
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/vinycalves/homebrew-tap.git" /tmp/homebrew-tap
           cp dist/homebrew/pb.rb /tmp/homebrew-tap/Formula/
           cd /tmp/homebrew-tap
           git config user.name "github-actions"
