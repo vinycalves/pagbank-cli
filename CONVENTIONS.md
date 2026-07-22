@@ -59,6 +59,17 @@ git tag v0.2.0 && git push origin v0.2.0
 
 O GitHub Actions faz todo o resto automaticamente.
 
+## Pré-push Hook
+
+O script `scripts/pre-push` roda `fmt + check + test + clippy` antes de cada push.
+Instale como hook do git:
+
+```bash
+ln -sf ../../scripts/pre-push .git/hooks/pre-push
+```
+
+Com isso, pushes que falharem em qualquer verificação são bloqueados automaticamente.
+
 ## Estrutura do Projeto
 
 ```

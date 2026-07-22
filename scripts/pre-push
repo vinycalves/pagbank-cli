@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "→ Rodando cargo fmt --check..."
+cargo fmt --all -- --check
+
+echo "→ Rodando cargo check..."
+cargo check --workspace
+
+echo "→ Rodando cargo test..."
+cargo test --workspace
+
+echo "→ Rodando cargo clippy..."
+cargo clippy --workspace -- -D warnings
+
+echo "✓ Todos os checks passaram!"
