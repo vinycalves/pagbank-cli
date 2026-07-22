@@ -126,14 +126,16 @@ jobs:
       - name: Build .rpm
         working-directory: cli
         run: cargo generate-rpm
+      - name: Collect packages
+        run: |
+          mkdir -p artifacts
+          find . -maxdepth 5 -name "*.deb" -o -name "*.rpm" | while read -r f; do
+            cp "$f" artifacts/
+          done
       - uses: actions/upload-artifact@v5
         with:
           name: packages
-          path: |
-            target/release/*.deb
-            target/release/*.rpm
-            target/x86_64-unknown-linux-gnu/release/*.deb
-            target/x86_64-unknown-linux-gnu/release/*.rpm
+          path: artifacts/*.deb artifacts/*.rpm
 
   create-release:
     needs: [build, build-packages]
