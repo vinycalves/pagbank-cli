@@ -121,15 +121,19 @@ jobs:
       - name: Install cargo-generate-rpm
         run: cargo install cargo-generate-rpm
       - name: Build .deb
-        run: cargo deb --manifest-path cli/Cargo.toml --target x86_64-unknown-linux-gnu
+        working-directory: cli
+        run: cargo deb
       - name: Build .rpm
-        run: cargo generate-rpm --manifest-path cli/Cargo.toml --target x86_64-unknown-linux-gnu
+        working-directory: cli
+        run: cargo generate-rpm
       - uses: actions/upload-artifact@v5
         with:
           name: packages
           path: |
-            target/x86_64-unknown-linux-gnu/release/*.deb
-            target/x86_64-unknown-linux-gnu/release/*.rpm
+            target/**/*.deb
+            target/**/*.rpm
+            cli/target/**/*.deb
+            cli/target/**/*.rpm
 
   create-release:
     needs: [build, build-packages]
