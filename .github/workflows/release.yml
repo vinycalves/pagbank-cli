@@ -103,7 +103,7 @@ jobs:
           cd "target/${{ matrix.target }}/release"
           tar czf "pb-${{ matrix.target }}.tar.gz" "pb${{ matrix.suffix }}"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v4
         with:
           name: pb-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/pb-${{ matrix.target }}.tar.gz
@@ -121,21 +121,21 @@ jobs:
       - name: Install cargo-generate-rpm
         run: cargo install cargo-generate-rpm
       - name: Build .deb
-        working-directory: cli
-        run: cargo deb
+        run: cargo deb -p pb
       - name: Build .rpm
-        working-directory: cli
-        run: cargo generate-rpm
+        run: |
+          cd cli && cargo generate-rpm
       - name: Collect packages
         run: |
           mkdir -p artifacts
-          find . -maxdepth 5 -name "*.deb" -o -name "*.rpm" | while read -r f; do
+          find . -maxdepth 5 \( -name "*.deb" -o -name "*.rpm" \) | while read -r f; do
             cp "$f" artifacts/
           done
-      - uses: actions/upload-artifact@v5
+      - run: ls -la artifacts/
+      - uses: actions/upload-artifact@v4
         with:
           name: packages
-          path: artifacts/*.deb artifacts/*.rpm
+          path: artifacts/
 
   create-release:
     needs: [build, build-packages]
@@ -172,7 +172,7 @@ jobs:
           - x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v4
         with:
           name: pb-${{ matrix.target }}
           path: ./assets
@@ -191,7 +191,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v4
         with:
           name: packages
           path: ./assets
