@@ -130,10 +130,10 @@ jobs:
         with:
           name: packages
           path: |
-            target/**/*.deb
-            target/**/*.rpm
-            cli/target/**/*.deb
-            cli/target/**/*.rpm
+            target/release/*.deb
+            target/release/*.rpm
+            target/x86_64-unknown-linux-gnu/release/*.deb
+            target/x86_64-unknown-linux-gnu/release/*.rpm
 
   create-release:
     needs: [build, build-packages]
@@ -178,8 +178,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ needs.create-release.outputs.tag }}" \
-            ./assets/* --clobber
+          find ./assets -type f | while read -r f; do
+            gh release upload "${{ needs.create-release.outputs.tag }}" "$f" --clobber
+          done
 
   upload-packages:
     needs: create-release
@@ -196,8 +197,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ needs.create-release.outputs.tag }}" \
-            ./assets/* --clobber
+          find ./assets -type f -name "*.deb" -o -name "*.rpm" | while read -r f; do
+            gh release upload "${{ needs.create-release.outputs.tag }}" "$f" --clobber
+          done
 
   aur:
     needs: create-release
