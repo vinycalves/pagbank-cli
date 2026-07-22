@@ -16,14 +16,9 @@ path = "src/main.rs"
 [package.metadata.deb]
 maintainer = "Vinycius <vinycius@users.noreply.github.com>"
 copyright = "2026 Vinycius"
-license-file = ["../LICENSE", "MIT"]
 extended-description = "CLI completa em Rust para as APIs do PagBank"
 section = "utils"
 priority = "optional"
-# TODO: pre-build systemd integration
-# assets = [
-#   ["target/release/pb", "usr/bin/", "755"],
-# ]
 
 [package.metadata.generate-rpm]
 name = "pb"
