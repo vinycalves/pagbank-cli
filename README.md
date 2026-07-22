@@ -24,6 +24,10 @@ A arquitetura reflete dois públicos diferentes:
 | Certificados | Criação de certificado digital (mTLS) |
 | Webhooks | Verificação de autenticidade SHA-256 |
 
+## Keywords
+
+pagbank, pagseguro, CLI, pagamentos, boleto, pix, crédito, recorrência, assinaturas, fintech, rust
+
 ## Stack
 
 - **Linguagem**: Rust (segurança de memória, zero custos de abstração)
