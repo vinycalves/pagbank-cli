@@ -79,18 +79,30 @@ mod tests {
 
     #[test]
     fn environment_from_str_sandbox() {
-        assert_eq!("sandbox".parse::<Environment>().unwrap(), Environment::Sandbox);
+        assert_eq!(
+            "sandbox".parse::<Environment>().unwrap(),
+            Environment::Sandbox
+        );
     }
 
     #[test]
     fn environment_from_str_production() {
-        assert_eq!("production".parse::<Environment>().unwrap(), Environment::Production);
+        assert_eq!(
+            "production".parse::<Environment>().unwrap(),
+            Environment::Production
+        );
     }
 
     #[test]
     fn environment_from_str_case_insensitive() {
-        assert_eq!("Sandbox".parse::<Environment>().unwrap(), Environment::Sandbox);
-        assert_eq!("PRODUCTION".parse::<Environment>().unwrap(), Environment::Production);
+        assert_eq!(
+            "Sandbox".parse::<Environment>().unwrap(),
+            Environment::Sandbox
+        );
+        assert_eq!(
+            "PRODUCTION".parse::<Environment>().unwrap(),
+            Environment::Production
+        );
     }
 
     #[test]

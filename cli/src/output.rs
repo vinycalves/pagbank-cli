@@ -72,7 +72,10 @@ mod tests {
 
     #[test]
     fn issues_url_is_correct() {
-        assert_eq!(ISSUES_URL, "https://github.com/vinycalves/pagbank-cli/issues");
+        assert_eq!(
+            ISSUES_URL,
+            "https://github.com/vinycalves/pagbank-cli/issues"
+        );
     }
 
     #[test]
