@@ -2,6 +2,63 @@
 
 Padrões e convenções utilizados neste projeto. Seguir estas diretrizes mantém o código consistente e facilita a manutenção.
 
+## Fluxo de Trabalho (GitLab Flow)
+
+```
+feature/meu-endpoint  ──► MR ──►  main  ──►  tag v0.2.0  ──►  release
+```
+
+| Passo | Comando |
+|-------|---------|
+| Criar branch | `git checkout main && git checkout -b feature/meu-endpoint` |
+| Commitar | `git add -A && git commit -m "tipo: descrição"` |
+| Sincronizar | `git push -u origin feature/meu-endpoint` |
+| Abrir MR | Via GitHub: `feature/meu-endpoint` → `main` |
+| Revisar | Colegas comentam, ajusta se necessário |
+| Merge | Squash merge via GitHub (mantém histórico limpo) |
+| Deletar branch | Botão no próprio MR após merge |
+
+### Nomenclatura de branches
+
+- `feature/<nome>` — nova funcionalidade
+- `fix/<nome>` — correção de bug
+- `refactor/<nome>` — refatoração sem mudança de comportamento
+- `docs/<nome>` — documentação
+- `chore/<nome>` — manutenção (CI, dependências, config)
+
+### Commits
+
+Usar [commits semânticos](https://www.conventionalcommits.org/):
+
+```
+feat: adicionar endpoint de estorno
+fix: corrigir parsing de data na resposta
+docs: atualizar README com exemplos
+refactor: extrair make_client para função compartilhada
+chore: atualizar dependências
+```
+
+### CI/CD
+
+- **Push para `main` ou qualquer branch**: `ci.yml` roda `fmt + check + test + clippy`
+- **Tag `v*`**: `release.yml` publica crates.io + GitHub Release + gera .deb/.rpm + AUR + Homebrew
+
+## Release
+
+```bash
+# 1. Garantir que main está atualizada
+git checkout main && git pull
+
+# 2. Decidir versão (semver)
+#    v0.1.0 -> v0.2.0 (minor: novas funcionalidades)
+#    v0.1.0 -> v0.1.1 (patch: bug fixes)
+
+# 3. Criar tag e push
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+O GitHub Actions faz todo o resto automaticamente.
+
 ## Estrutura do Projeto
 
 ```

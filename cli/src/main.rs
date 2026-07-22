@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
                 hasher.update(token.as_bytes());
                 hasher.update(b"-");
                 hasher.update(payload.as_bytes());
-                let computed = format!("{:x}", hasher.finalize());
+                let computed = hasher.finalize().iter().map(|b| format!("{:02x}", b)).collect::<String>();
                 if computed == signature {
                     output::print_success("Assinatura válida!");
                 } else {
