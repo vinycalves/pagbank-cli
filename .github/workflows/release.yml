@@ -20,18 +20,24 @@ jobs:
   publish-sdk:
     needs: test
     runs-on: ubuntu-latest
-    if: secrets.CARGO_REGISTRY_TOKEN != ''
     steps:
       - uses: actions/checkout@v5
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rustflags: ""
-      - run: cargo publish -p pagbank-sdk --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Publish pagbank-sdk
+        env:
+          TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "CARGO_REGISTRY_TOKEN não definido — pulando publish"
+          else
+            cargo publish -p pagbank-sdk --token "$TOKEN"
+          fi
 
   publish-cli:
     needs: publish-sdk
     runs-on: ubuntu-latest
-    if: secrets.CARGO_REGISTRY_TOKEN != ''
     steps:
       - uses: actions/checkout@v5
       - uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -41,7 +47,15 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           sed -i "s|path = \"../sdk\"|version = \"$VERSION\"|" cli/Cargo.toml
-      - run: cargo publish -p pb --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Publish pb
+        env:
+          TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "CARGO_REGISTRY_TOKEN não definido — pulando publish"
+          else
+            cargo publish -p pb --token "$TOKEN"
+          fi
 
   build:
     needs: test
@@ -177,7 +191,6 @@ jobs:
   aur:
     needs: create-release
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'vinycius'
     steps:
       - uses: actions/checkout@v5
       - name: Generate PKGBUILD from template
@@ -195,8 +208,11 @@ jobs:
       - name: Push to AUR
         env:
           AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
-        if: env.AUR_SSH_KEY != ''
         run: |
+          if [ -z "$AUR_SSH_KEY" ]; then
+            echo "AUR_SSH_KEY não definida — pulando AUR"
+            exit 0
+          fi
           mkdir -p ~/.ssh
           echo "$AUR_SSH_KEY" > ~/.ssh/aur
           chmod 600 ~/.ssh/aur
@@ -215,7 +231,6 @@ jobs:
   homebrew:
     needs: create-release
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'vinycius'
     steps:
       - uses: actions/checkout@v5
       - name: Generate formula from template
@@ -235,8 +250,11 @@ jobs:
       - name: Push to Homebrew tap
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        if: env.HOMEBREW_TAP_TOKEN != ''
         run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN não definida — pulando Homebrew"
+            exit 0
+          fi
           VERSION="${GITHUB_REF_NAME#v}"
           git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/vinycius/homebrew-tap.git" /tmp/homebrew-tap
           cp dist/homebrew/pb.rb /tmp/homebrew-tap/Formula/
