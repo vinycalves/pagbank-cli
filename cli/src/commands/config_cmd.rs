@@ -12,7 +12,7 @@ pub async fn run(action: ConfigAction) -> Result<()> {
                 .interact()?;
             let environment = dialoguer::Select::new()
                 .with_prompt("Ambiente padrão")
-                .items(&["sandbox", "production"])
+                .items(["sandbox", "production"])
                 .default(0)
                 .interact()?;
 

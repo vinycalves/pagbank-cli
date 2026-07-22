@@ -15,16 +15,7 @@ impl Default for EnvironmentConfig {
     }
 }
 
-impl Default for PbConfig {
-    fn default() -> Self {
-        Self {
-            default: EnvironmentConfig::default(),
-            production: None,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct PbConfig {
     pub default: EnvironmentConfig,
     #[serde(skip_serializing_if = "Option::is_none")]
