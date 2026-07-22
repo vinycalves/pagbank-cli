@@ -2,9 +2,7 @@ use crate::client::{PagBankClient, RequestOptions};
 use crate::config::Service;
 use crate::error::PagBankError;
 
-pub async fn get_preferences(
-    client: &PagBankClient,
-) -> Result<serde_json::Value, PagBankError> {
+pub async fn get_preferences(client: &PagBankClient) -> Result<serde_json::Value, PagBankError> {
     let resp = client
         .get(Service::Recurring, "/notification-preferences")
         .await?;
@@ -29,9 +27,7 @@ pub async fn update_preferences(
 pub async fn get_encryption_keys(
     client: &PagBankClient,
 ) -> Result<serde_json::Value, PagBankError> {
-    let resp = client
-        .get(Service::Recurring, "/encryption-keys")
-        .await?;
+    let resp = client.get(Service::Recurring, "/encryption-keys").await?;
     crate::models::parse_response(resp).await
 }
 

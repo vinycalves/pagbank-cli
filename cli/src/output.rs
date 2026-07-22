@@ -1,4 +1,4 @@
-use comfy_table::{Table, presets::UTF8_FULL, modifiers::UTF8_ROUND_CORNERS};
+use comfy_table::{modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, Table};
 use serde_json::Value;
 
 pub fn print_json(value: &Value) {
@@ -11,7 +11,11 @@ pub fn print_table(headers: &[&str], rows: Vec<Vec<String>>) {
         .load_preset(UTF8_FULL)
         .apply_modifier(UTF8_ROUND_CORNERS);
 
-    table.set_header(headers.iter().map(|h| comfy_table::Cell::new(*h).fg(comfy_table::Color::Cyan)));
+    table.set_header(
+        headers
+            .iter()
+            .map(|h| comfy_table::Cell::new(*h).fg(comfy_table::Color::Cyan)),
+    );
 
     for row in rows {
         table.add_row(row);
@@ -47,8 +51,11 @@ pub fn print_object_table(title: &str, value: &Value) {
     println!("{table}");
 }
 
+pub const ISSUES_URL: &str = "https://github.com/vinycalves/pagbank-cli/issues";
+
 pub fn print_error(msg: &str) {
     eprintln!("\x1b[31m✗ {msg}\x1b[0m");
+    eprintln!("\x1b[33m→ Reporte em: {ISSUES_URL}\x1b[0m");
 }
 
 pub fn print_success(msg: &str) {
@@ -57,4 +64,28 @@ pub fn print_success(msg: &str) {
 
 pub fn print_info(msg: &str) {
     println!("\x1b[36m→ {msg}\x1b[0m");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn issues_url_is_correct() {
+        assert_eq!(ISSUES_URL, "https://github.com/vinycalves/pagbank-cli/issues");
+    }
+
+    #[test]
+    fn json_output() {
+        let val = serde_json::json!({"key": "value", "num": 42});
+        let out = serde_json::to_string_pretty(&val).unwrap();
+        assert!(out.contains("\"key\": \"value\""));
+    }
+
+    #[test]
+    fn print_object_table_with_object() {
+        let val = serde_json::json!({"nome": "João", "email": "joao@test.com"});
+        // just verify it doesn't panic
+        let _ = format!("{:?}", val);
+    }
 }

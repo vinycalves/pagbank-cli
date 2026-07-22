@@ -8,7 +8,12 @@ pub async fn create(
     body: &serde_json::Value,
 ) -> Result<Checkout, PagBankError> {
     let resp = client
-        .post(Service::Main, "/checkouts", body, &RequestOptions::default())
+        .post(
+            Service::Main,
+            "/checkouts",
+            body,
+            &RequestOptions::default(),
+        )
         .await?;
     crate::models::parse_response(resp).await
 }
@@ -20,10 +25,7 @@ pub async fn get(client: &PagBankClient, id: &str) -> Result<Checkout, PagBankEr
     crate::models::parse_response(resp).await
 }
 
-pub async fn activate(
-    client: &PagBankClient,
-    id: &str,
-) -> Result<Checkout, PagBankError> {
+pub async fn activate(client: &PagBankClient, id: &str) -> Result<Checkout, PagBankError> {
     let body = serde_json::json!({});
     let resp = client
         .post(
@@ -36,10 +38,7 @@ pub async fn activate(
     crate::models::parse_response(resp).await
 }
 
-pub async fn deactivate(
-    client: &PagBankClient,
-    id: &str,
-) -> Result<Checkout, PagBankError> {
+pub async fn deactivate(client: &PagBankClient, id: &str) -> Result<Checkout, PagBankError> {
     let body = serde_json::json!({});
     let resp = client
         .post(

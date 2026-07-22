@@ -3,14 +3,35 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+impl Default for EnvironmentConfig {
+    fn default() -> Self {
+        Self {
+            environment: "sandbox".to_string(),
+            token: String::new(),
+            recurring_token: None,
+            client_id: None,
+            client_secret: None,
+        }
+    }
+}
+
+impl Default for PbConfig {
+    fn default() -> Self {
+        Self {
+            default: EnvironmentConfig::default(),
+            production: None,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PbConfig {
     pub default: EnvironmentConfig,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub production: Option<EnvironmentConfig>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EnvironmentConfig {
     #[serde(default = "default_environment")]
     pub environment: String,
@@ -30,8 +51,9 @@ fn default_environment() -> String {
 
 impl PbConfig {
     pub fn config_dir() -> Result<PathBuf> {
-        let config_dir = dirs::config_dir()
-            .ok_or_else(|| anyhow::anyhow!("não foi possível determinar o diretório de configuração"))?;
+        let config_dir = dirs::config_dir().ok_or_else(|| {
+            anyhow::anyhow!("não foi possível determinar o diretório de configuração")
+        })?;
         Ok(config_dir.join("pb"))
     }
 
@@ -87,5 +109,94 @@ impl PbConfig {
             "client_secret" => Ok(cfg.client_secret.clone().unwrap_or_default()),
             _ => anyhow::bail!("chave desconhecida: {key}"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn config_default() {
+        let config = PbConfig::default();
+        assert_eq!(config.default.environment, "sandbox");
+        assert_eq!(config.default.token, "");
+        assert!(config.production.is_none());
+    }
+
+    #[test]
+    fn config_toml_roundtrip() {
+        let config = PbConfig {
+            default: EnvironmentConfig {
+                environment: "sandbox".to_string(),
+                token: "abc123".to_string(),
+                recurring_token: Some("def456".to_string()),
+                client_id: None,
+                client_secret: None,
+            },
+            production: Some(EnvironmentConfig {
+                environment: "production".to_string(),
+                token: "prod_token".to_string(),
+                recurring_token: None,
+                client_id: Some("app_id".to_string()),
+                client_secret: Some("secret".to_string()),
+            }),
+        };
+
+        let toml_str = toml::to_string_pretty(&config).unwrap();
+        let parsed: PbConfig = toml::from_str(&toml_str).unwrap();
+
+        assert_eq!(parsed.default.environment, "sandbox");
+        assert_eq!(parsed.default.token, "abc123");
+        assert_eq!(parsed.default.recurring_token, Some("def456".to_string()));
+        assert!(parsed.default.client_id.is_none());
+        let prod = parsed.production.unwrap();
+        assert_eq!(prod.client_id, Some("app_id".to_string()));
+    }
+
+    #[test]
+    fn config_minimal_toml() {
+        let toml_str = r#"
+            [default]
+            token = "my_token"
+        "#;
+        let config: PbConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.default.token, "my_token");
+        assert_eq!(config.default.environment, "sandbox");
+    }
+
+    #[test]
+    fn test_get_active_config_default() {
+        let config = PbConfig::default();
+        let active = config.get_active_config(None);
+        assert_eq!(active.environment, "sandbox");
+    }
+
+    #[test]
+    fn test_get_active_config_production_without_override() {
+        let config = PbConfig::default();
+        let active = config.get_active_config(Some("sandbox"));
+        assert_eq!(active.environment, "sandbox");
+    }
+
+    #[test]
+    fn test_get_active_config_production_fallsback_to_default() {
+        let config = PbConfig::default();
+        let active = config.get_active_config(Some("production"));
+        // falls back to default when production is None
+        assert_eq!(active.environment, "sandbox");
+    }
+
+    #[test]
+    fn test_get_value_returns_empty_for_unset() {
+        let config = PbConfig::default();
+        assert_eq!(config.get_value("token").unwrap(), "");
+        assert_eq!(config.get_value("recurring_token").unwrap(), "");
+    }
+
+    #[test]
+    fn test_get_value_unknown_key() {
+        let config = PbConfig::default();
+        assert!(config.get_value("unknown").is_err());
     }
 }

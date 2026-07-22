@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pagbank_sdk::{PagBankClient, PagBankConfig, Environment};
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::ConnectAction;
 use crate::config::PbConfig;
@@ -17,22 +17,42 @@ fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagBankC
     Ok(PagBankClient::new(pagbank_config))
 }
 
-pub async fn run(action: ConnectAction, env_override: Option<&str>, output_fmt: &crate::cli::OutputFormat) -> Result<()> {
+pub async fn run(
+    action: ConnectAction,
+    env_override: Option<&str>,
+    output_fmt: &crate::cli::OutputFormat,
+) -> Result<()> {
     let config = PbConfig::load()?;
     let client = make_client(&config, env_override)?;
 
     match action {
-        ConnectAction::AppCreate { name, description, site, redirect_uri, logo } => {
+        ConnectAction::AppCreate {
+            name,
+            description,
+            site,
+            redirect_uri,
+            logo,
+        } => {
             let mut body = serde_json::json!({ "name": name });
-            if let Some(d) = description { body["description"] = serde_json::json!(d); }
-            if let Some(s) = site { body["site"] = serde_json::json!(s); }
-            if let Some(r) = redirect_uri { body["redirect_uri"] = serde_json::json!(r); }
-            if let Some(l) = logo { body["logo"] = serde_json::json!(l); }
+            if let Some(d) = description {
+                body["description"] = serde_json::json!(d);
+            }
+            if let Some(s) = site {
+                body["site"] = serde_json::json!(s);
+            }
+            if let Some(r) = redirect_uri {
+                body["redirect_uri"] = serde_json::json!(r);
+            }
+            if let Some(l) = logo {
+                body["logo"] = serde_json::json!(l);
+            }
             let result = pagbank_sdk::endpoints::connect::create_app(&client, &body).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Aplicação Connect Criada", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Aplicação Connect Criada", &val)
+                }
             }
             Ok(())
         }
@@ -41,12 +61,24 @@ pub async fn run(action: ConnectAction, env_override: Option<&str>, output_fmt: 
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Aplicação Connect", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Aplicação Connect", &val)
+                }
             }
             Ok(())
         }
-        ConnectAction::Authorize { app_id, redirect_uri, scope } => {
-            let url = pagbank_sdk::endpoints::connect::get_authorize_url(&client, &app_id, &redirect_uri, &scope).await;
+        ConnectAction::Authorize {
+            app_id,
+            redirect_uri,
+            scope,
+        } => {
+            let url = pagbank_sdk::endpoints::connect::get_authorize_url(
+                &client,
+                &app_id,
+                &redirect_uri,
+                &scope,
+            )
+            .await;
             output::print_info(&format!("URL de autorização:\n{url}"));
             Ok(())
         }
@@ -80,7 +112,9 @@ pub async fn run(action: ConnectAction, env_override: Option<&str>, output_fmt: 
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Token Renovado", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Token Renovado", &val)
+                }
             }
             Ok(())
         }

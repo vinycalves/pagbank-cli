@@ -126,7 +126,10 @@ impl PagBankClient {
         self.handle_response(resp).await
     }
 
-    async fn handle_response(&self, resp: reqwest::Response) -> Result<reqwest::Response, PagBankError> {
+    async fn handle_response(
+        &self,
+        resp: reqwest::Response,
+    ) -> Result<reqwest::Response, PagBankError> {
         let status = resp.status().as_u16();
         if resp.status().is_success() {
             return Ok(resp);

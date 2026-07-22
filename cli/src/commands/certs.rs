@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pagbank_sdk::{PagBankClient, PagBankConfig, Environment};
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::CertsAction;
 use crate::config::PbConfig;
@@ -17,12 +17,19 @@ fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagBankC
     Ok(PagBankClient::new(pagbank_config))
 }
 
-pub async fn run(action: CertsAction, env_override: Option<&str>, output_fmt: &crate::cli::OutputFormat) -> Result<()> {
+pub async fn run(
+    action: CertsAction,
+    env_override: Option<&str>,
+    output_fmt: &crate::cli::OutputFormat,
+) -> Result<()> {
     let config = PbConfig::load()?;
     let client = make_client(&config, env_override)?;
 
     match action {
-        CertsAction::Create { certificate, password } => {
+        CertsAction::Create {
+            certificate,
+            password,
+        } => {
             let body = serde_json::json!({
                 "certificate": certificate,
                 "password": password,
@@ -31,7 +38,9 @@ pub async fn run(action: CertsAction, env_override: Option<&str>, output_fmt: &c
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Certificado Criado", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Certificado Criado", &val)
+                }
             }
             Ok(())
         }

@@ -4,9 +4,7 @@ use crate::error::PagBankError;
 use crate::models::clubpag::*;
 
 pub async fn get_settings(client: &PagBankClient) -> Result<ClubPagSettings, PagBankError> {
-    let resp = client
-        .get(Service::Main, "/clubpag/settings")
-        .await?;
+    let resp = client.get(Service::Main, "/clubpag/settings").await?;
     crate::models::parse_response(resp).await
 }
 
@@ -41,9 +39,7 @@ pub async fn identify_purchase(
 }
 
 pub async fn list_benefits(client: &PagBankClient) -> Result<Vec<ClubPagBenefit>, PagBankError> {
-    let resp = client
-        .get(Service::Main, "/clubpag/benefits")
-        .await?;
+    let resp = client.get(Service::Main, "/clubpag/benefits").await?;
     crate::models::parse_list(resp).await
 }
 
@@ -67,9 +63,7 @@ pub async fn get_cashback(client: &PagBankClient) -> Result<ClubPagCashback, Pag
     crate::models::parse_response(resp).await
 }
 
-pub async fn list_coupons(
-    client: &PagBankClient,
-) -> Result<Vec<ClubPagCoupon>, PagBankError> {
+pub async fn list_coupons(client: &PagBankClient) -> Result<Vec<ClubPagCoupon>, PagBankError> {
     let resp = client.get(Service::Main, "/clubpag/coupons").await?;
     crate::models::parse_list(resp).await
 }

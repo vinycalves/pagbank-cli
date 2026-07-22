@@ -8,7 +8,12 @@ pub async fn create(
     body: &serde_json::Value,
 ) -> Result<Plan, PagBankError> {
     let resp = client
-        .post(Service::Recurring, "/plans", body, &RequestOptions::default())
+        .post(
+            Service::Recurring,
+            "/plans",
+            body,
+            &RequestOptions::default(),
+        )
         .await?;
     crate::models::parse_response(resp).await
 }

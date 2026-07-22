@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pagbank_sdk::{PagBankClient, PagBankConfig, Environment};
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::AuthAction;
 use crate::config::PbConfig;
@@ -28,7 +28,11 @@ pub async fn run(action: AuthAction) -> Result<()> {
             if token.is_empty() {
                 output::print_error("Nenhum token configurado");
             } else {
-                let masked = format!("{}...{}", &token[..8.min(token.len())], &token[token.len().saturating_sub(4)..]);
+                let masked = format!(
+                    "{}...{}",
+                    &token[..8.min(token.len())],
+                    &token[token.len().saturating_sub(4)..]
+                );
                 output::print_info(&format!("Ambiente: {env}"));
                 output::print_info(&format!("Token: {masked}"));
                 if config.default.recurring_token.is_some() {

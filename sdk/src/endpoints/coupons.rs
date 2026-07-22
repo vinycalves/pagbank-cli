@@ -8,7 +8,12 @@ pub async fn create(
     body: &serde_json::Value,
 ) -> Result<Coupon, PagBankError> {
     let resp = client
-        .post(Service::Recurring, "/coupons", body, &RequestOptions::default())
+        .post(
+            Service::Recurring,
+            "/coupons",
+            body,
+            &RequestOptions::default(),
+        )
         .await?;
     crate::models::parse_response(resp).await
 }

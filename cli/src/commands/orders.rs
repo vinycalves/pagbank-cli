@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pagbank_sdk::{PagBankClient, PagBankConfig, Environment};
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::OrdersAction;
 use crate::config::PbConfig;
@@ -17,17 +17,33 @@ fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagBankC
     Ok(PagBankClient::new(pagbank_config))
 }
 
-pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &crate::cli::OutputFormat) -> Result<()> {
+pub async fn run(
+    action: OrdersAction,
+    env_override: Option<&str>,
+    output_fmt: &crate::cli::OutputFormat,
+) -> Result<()> {
     let config = PbConfig::load()?;
     let client = make_client(&config, env_override)?;
 
     match action {
         OrdersAction::Create {
-            reference_id, customer_name, customer_email, customer_tax_id,
-            item, item_qty, item_amount, method,
-            card_number, card_exp_month, card_exp_year, card_cvv,
-            card_holder_name, card_holder_tax_id, installments,
-            notification_url, qr_amount,
+            reference_id,
+            customer_name,
+            customer_email,
+            customer_tax_id,
+            item,
+            item_qty,
+            item_amount,
+            method,
+            card_number,
+            card_exp_month,
+            card_exp_year,
+            card_cvv,
+            card_holder_name,
+            card_holder_tax_id,
+            installments,
+            notification_url,
+            qr_amount,
         } => {
             let mut charges = Vec::new();
             let mut payment_method = serde_json::json!({ "type": method.to_uppercase() });
@@ -90,11 +106,14 @@ pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &
                 "notification_urls": if notification_urls.is_empty() { serde_json::json!([]) } else { serde_json::json!(notification_urls) },
             });
 
-            let result = pagbank_sdk::endpoints::orders::create(&client, &body, &Default::default()).await?;
+            let result =
+                pagbank_sdk::endpoints::orders::create(&client, &body, &Default::default()).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Pedido Criado", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Pedido Criado", &val)
+                }
             }
             Ok(())
         }
@@ -107,7 +126,11 @@ pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &
             }
             Ok(())
         }
-        OrdersAction::List { status, page, per_page } => {
+        OrdersAction::List {
+            status,
+            page,
+            per_page,
+        } => {
             let mut params = vec![
                 ("page".to_string(), page.to_string()),
                 ("per_page".to_string(), per_page.to_string()),
@@ -121,21 +144,35 @@ pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &
                 crate::cli::OutputFormat::Json => output::print_json(&val),
                 crate::cli::OutputFormat::Table => {
                     if let Some(arr) = val.as_array() {
-                        let rows: Vec<Vec<String>> = arr.iter().map(|o| {
-                            vec![
-                                o["id"].as_str().unwrap_or("").to_string(),
-                                o["reference_id"].as_str().unwrap_or("").to_string(),
-                                o["charges"][0]["status"].as_str().unwrap_or("").to_string(),
-                                o["charges"][0]["amount"]["value"].to_string(),
-                            ]
-                        }).collect();
+                        let rows: Vec<Vec<String>> = arr
+                            .iter()
+                            .map(|o| {
+                                vec![
+                                    o["id"].as_str().unwrap_or("").to_string(),
+                                    o["reference_id"].as_str().unwrap_or("").to_string(),
+                                    o["charges"][0]["status"].as_str().unwrap_or("").to_string(),
+                                    o["charges"][0]["amount"]["value"].to_string(),
+                                ]
+                            })
+                            .collect();
                         output::print_table(&["ID", "Referência", "Status", "Valor"], rows);
                     }
                 }
             }
             Ok(())
         }
-        OrdersAction::Pay { order_id, method, card_number, card_exp_month, card_exp_year, card_cvv, card_holder_name, card_holder_tax_id, installments, card_id } => {
+        OrdersAction::Pay {
+            order_id,
+            method,
+            card_number,
+            card_exp_month,
+            card_exp_year,
+            card_cvv,
+            card_holder_name,
+            card_holder_tax_id,
+            installments,
+            card_id,
+        } => {
             let mut payment_method = serde_json::json!({ "type": method.to_uppercase() });
 
             match method.to_lowercase().as_str() {
@@ -174,11 +211,14 @@ pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &
             Ok(())
         }
         OrdersAction::Capture { charge_id } => {
-            let result = pagbank_sdk::endpoints::charges::capture(&client, &charge_id, None).await?;
+            let result =
+                pagbank_sdk::endpoints::charges::capture(&client, &charge_id, None).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Pagamento Capturado", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Pagamento Capturado", &val)
+                }
             }
             Ok(())
         }
@@ -187,7 +227,9 @@ pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Pagamento Cancelado", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Pagamento Cancelado", &val)
+                }
             }
             Ok(())
         }
@@ -195,7 +237,9 @@ pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &
             let result = pagbank_sdk::endpoints::orders::get_split(&client, &order_id).await?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&result),
-                crate::cli::OutputFormat::Table => output::print_object_table("Divisão do Pagamento", &result),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Divisão do Pagamento", &result)
+                }
             }
             Ok(())
         }
@@ -208,11 +252,20 @@ pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &
             let result = pagbank_sdk::endpoints::charges::get_costs(&client, &charge_id).await?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&result),
-                crate::cli::OutputFormat::Table => output::print_object_table("Taxas da Transação", &result),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Taxas da Transação", &result)
+                }
             }
             Ok(())
         }
-        OrdersAction::CardStore { number, exp_month, exp_year, security_code, holder_name, holder_tax_id } => {
+        OrdersAction::CardStore {
+            number,
+            exp_month,
+            exp_year,
+            security_code,
+            holder_name,
+            holder_tax_id,
+        } => {
             let body = serde_json::json!({
                 "card": {
                     "number": number,
@@ -229,7 +282,9 @@ pub async fn run(action: OrdersAction, env_override: Option<&str>, output_fmt: &
             let result = pagbank_sdk::endpoints::charges::store_card(&client, &body).await?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&result),
-                crate::cli::OutputFormat::Table => output::print_object_table("Cartão Armazenado", &result),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Cartão Armazenado", &result)
+                }
             }
             Ok(())
         }

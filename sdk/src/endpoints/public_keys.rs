@@ -6,7 +6,12 @@ use crate::models::PublicKey;
 pub async fn create(client: &PagBankClient) -> Result<PublicKey, PagBankError> {
     let body = serde_json::json!({});
     let resp = client
-        .post(Service::Main, "/public-keys", &body, &RequestOptions::default())
+        .post(
+            Service::Main,
+            "/public-keys",
+            &body,
+            &RequestOptions::default(),
+        )
         .await?;
     crate::models::parse_response(resp).await
 }

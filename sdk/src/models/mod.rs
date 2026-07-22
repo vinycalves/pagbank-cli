@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use crate::error::PagBankError;
 
 pub mod account;
-pub mod charge;
 pub mod certificate;
+pub mod charge;
 pub mod checkout;
 pub mod clubpag;
 pub mod common;

@@ -142,14 +142,9 @@ pub enum ConfigAction {
     #[command(about = "Setup interativo")]
     Init,
     #[command(about = "Definir valor de configuração")]
-    Set {
-        key: String,
-        value: String,
-    },
+    Set { key: String, value: String },
     #[command(about = "Ver valor de configuração")]
-    Get {
-        key: String,
-    },
+    Get { key: String },
     #[command(about = "Mostrar configuração completa")]
     Show,
 }
@@ -159,13 +154,9 @@ pub enum KeysAction {
     #[command(about = "Criar chave pública")]
     Create,
     #[command(about = "Consultar chave pública")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
     #[command(about = "Alterar chave pública")]
-    Update {
-        id: String,
-    },
+    Update { id: String },
 }
 
 #[derive(Subcommand)]
@@ -184,9 +175,7 @@ pub enum ConnectAction {
         logo: Option<String>,
     },
     #[command(about = "Consultar aplicação")]
-    AppGet {
-        id: String,
-    },
+    AppGet { id: String },
     #[command(about = "Gerar URL de autorização")]
     Authorize {
         #[arg(long)]
@@ -238,9 +227,7 @@ pub enum AccountsAction {
         tax_id: String,
     },
     #[command(about = "Consultar conta")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
 }
 
 #[derive(Subcommand)]
@@ -283,9 +270,7 @@ pub enum OrdersAction {
         qr_amount: Option<i64>,
     },
     #[command(about = "Consultar pedido")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
     #[command(about = "Listar pedidos")]
     List {
         #[arg(long)]
@@ -318,25 +303,15 @@ pub enum OrdersAction {
         card_id: Option<String>,
     },
     #[command(about = "Capturar pagamento autorizado")]
-    Capture {
-        charge_id: String,
-    },
+    Capture { charge_id: String },
     #[command(about = "Cancelar pagamento")]
-    Cancel {
-        charge_id: String,
-    },
+    Cancel { charge_id: String },
     #[command(about = "Consultar divisão do pagamento")]
-    Split {
-        order_id: String,
-    },
+    Split { order_id: String },
     #[command(about = "Liberar divisão com custódia")]
-    SplitRelease {
-        order_id: String,
-    },
+    SplitRelease { order_id: String },
     #[command(about = "Consultar taxas de uma transação")]
-    Fees {
-        charge_id: String,
-    },
+    Fees { charge_id: String },
     #[command(about = "Validar e armazenar cartão")]
     CardStore {
         #[arg(long)]
@@ -370,17 +345,11 @@ pub enum CheckoutsAction {
         payment_methods: Option<String>,
     },
     #[command(about = "Consultar checkout")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
     #[command(about = "Ativar checkout")]
-    Activate {
-        id: String,
-    },
+    Activate { id: String },
     #[command(about = "Inativar checkout")]
-    Deactivate {
-        id: String,
-    },
+    Deactivate { id: String },
 }
 
 #[derive(Subcommand)]
@@ -407,9 +376,7 @@ pub enum PlansAction {
         trial_unit: Option<String>,
     },
     #[command(about = "Consultar plano")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
     #[command(about = "Listar planos")]
     List {
         #[arg(long, default_value = "1")]
@@ -428,13 +395,9 @@ pub enum PlansAction {
         description: Option<String>,
     },
     #[command(about = "Ativar plano")]
-    Activate {
-        id: String,
-    },
+    Activate { id: String },
     #[command(about = "Inativar plano")]
-    Deactivate {
-        id: String,
-    },
+    Deactivate { id: String },
 }
 
 #[derive(Subcommand)]
@@ -457,9 +420,7 @@ pub enum SubscribersAction {
         phone_type: Option<String>,
     },
     #[command(about = "Consultar assinante")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
     #[command(about = "Listar assinantes")]
     List {
         #[arg(long, default_value = "1")]
@@ -507,9 +468,7 @@ pub enum SubscriptionsAction {
         start_at: Option<String>,
     },
     #[command(about = "Consultar assinatura")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
     #[command(about = "Listar assinaturas")]
     List {
         #[arg(long)]
@@ -526,21 +485,13 @@ pub enum SubscriptionsAction {
         plan_id: Option<String>,
     },
     #[command(about = "Cancelar assinatura")]
-    Cancel {
-        id: String,
-    },
+    Cancel { id: String },
     #[command(about = "Suspender assinatura")]
-    Suspend {
-        id: String,
-    },
+    Suspend { id: String },
     #[command(about = "Ativar assinatura")]
-    Activate {
-        id: String,
-    },
+    Activate { id: String },
     #[command(about = "Listar faturas da assinatura")]
-    Invoices {
-        id: String,
-    },
+    Invoices { id: String },
 }
 
 #[derive(Subcommand)]
@@ -561,9 +512,7 @@ pub enum CouponsAction {
         limit: Option<i64>,
     },
     #[command(about = "Consultar cupom")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
     #[command(about = "Listar cupons")]
     List {
         #[arg(long, default_value = "1")]
@@ -572,25 +521,17 @@ pub enum CouponsAction {
         per_page: i32,
     },
     #[command(about = "Ativar cupom")]
-    Activate {
-        id: String,
-    },
+    Activate { id: String },
     #[command(about = "Inativar cupom")]
-    Deactivate {
-        id: String,
-    },
+    Deactivate { id: String },
 }
 
 #[derive(Subcommand)]
 pub enum InvoicesAction {
     #[command(about = "Consultar fatura")]
-    Get {
-        id: String,
-    },
+    Get { id: String },
     #[command(about = "Listar pagamentos de uma fatura")]
-    Payments {
-        invoice_id: String,
-    },
+    Payments { invoice_id: String },
     #[command(about = "Criar estorno")]
     Refund {
         payment_id: String,
@@ -598,13 +539,9 @@ pub enum InvoicesAction {
         amount: Option<i64>,
     },
     #[command(about = "Listar estornos")]
-    ListRefunds {
-        payment_id: String,
-    },
+    ListRefunds { payment_id: String },
     #[command(about = "Consultar pagamento recorrente")]
-    GetPayment {
-        payment_id: String,
-    },
+    GetPayment { payment_id: String },
 }
 
 #[derive(Subcommand)]

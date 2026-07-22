@@ -171,3 +171,137 @@ pub struct PageLinks {
     #[serde(rename = "type")]
     pub link_type: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn amount_serialization() {
+        let amount = Amount {
+            value: 1000,
+            currency: "BRL".to_string(),
+        };
+        let json = serde_json::to_value(&amount).unwrap();
+        assert_eq!(json["value"], 1000);
+        assert_eq!(json["currency"], "BRL");
+    }
+
+    #[test]
+    fn amount_default_currency() {
+        let json = r#"{"value": 500}"#;
+        let amount: Amount = serde_json::from_str(json).unwrap();
+        assert_eq!(amount.currency, "BRL");
+    }
+
+    #[test]
+    fn amount_deserialization() {
+        let json = r#"{"value": 2500, "currency": "USD"}"#;
+        let amount: Amount = serde_json::from_str(json).unwrap();
+        assert_eq!(amount.value, 2500);
+        assert_eq!(amount.currency, "USD");
+    }
+
+    #[test]
+    fn address_serialization() {
+        let address = Address {
+            street: Some("Rua Exemplo".to_string()),
+            number: Some("123".to_string()),
+            complement: None,
+            locality: None,
+            city: Some("São Paulo".to_string()),
+            region: Some("SP".to_string()),
+            region_code: Some("SP".to_string()),
+            country: "BRA".to_string(),
+            postal_code: "01452002".to_string(),
+        };
+        let json = serde_json::to_value(&address).unwrap();
+        assert_eq!(json["street"], "Rua Exemplo");
+        assert_eq!(json["number"], "123");
+        assert_eq!(json["postal_code"], "01452002");
+        assert_eq!(json["country"], "BRA");
+        assert!(json.get("complement").is_none());
+    }
+
+    #[test]
+    fn address_default_country() {
+        let json = r#"{"postal_code": "01452002"}"#;
+        let address: Address = serde_json::from_str(json).unwrap();
+        assert_eq!(address.country, "BRA");
+    }
+
+    #[test]
+    fn phone_serialization() {
+        let phone = Phone {
+            country: Some("55".to_string()),
+            area: "11".to_string(),
+            number: "999999999".to_string(),
+            phone_type: Some("MOBILE".to_string()),
+        };
+        let json = serde_json::to_value(&phone).unwrap();
+        assert_eq!(json["area"], "11");
+        assert_eq!(json["number"], "999999999");
+        assert_eq!(json["type"], "MOBILE");
+    }
+
+    #[test]
+    fn phone_optional_fields() {
+        let json = r#"{"area": "11", "number": "999999999"}"#;
+        let phone: Phone = serde_json::from_str(json).unwrap();
+        assert!(phone.country.is_none());
+        assert!(phone.phone_type.is_none());
+    }
+
+    #[test]
+    fn item_serialization() {
+        let item = Item {
+            reference_id: Some("item-001".to_string()),
+            name: "Produto".to_string(),
+            quantity: 2,
+            unit_amount: 1000,
+        };
+        let json = serde_json::to_value(&item).unwrap();
+        assert_eq!(json["name"], "Produto");
+        assert_eq!(json["quantity"], 2);
+        assert_eq!(json["unit_amount"], 1000);
+    }
+
+    #[test]
+    fn split_serialization() {
+        let split = Split {
+            method: "FIXED".to_string(),
+            receivers: Some(vec![SplitReceiver {
+                amount: SplitAmount { value: 500 },
+                account: SplitAccount {
+                    id: "ACC_123".to_string(),
+                },
+                configurations: None,
+                reason: None,
+            }]),
+        };
+        let json = serde_json::to_value(&split).unwrap();
+        assert_eq!(json["method"], "FIXED");
+        assert_eq!(json["receivers"][0]["amount"]["value"], 500);
+        assert_eq!(json["receivers"][0]["account"]["id"], "ACC_123");
+    }
+
+    #[test]
+    fn link_serialization() {
+        let link = Link {
+            rel: "self".to_string(),
+            href: "https://api.pagseguro.com/orders/123".to_string(),
+            media: "application/json".to_string(),
+            link_type: "GET".to_string(),
+        };
+        let json = serde_json::to_value(&link).unwrap();
+        assert_eq!(json["rel"], "self");
+        assert_eq!(json["href"], "https://api.pagseguro.com/orders/123");
+    }
+
+    #[test]
+    fn link_default_media() {
+        let json = r#"{"rel": "self", "href": "https://example.com", "type": "GET"}"#;
+        let link: Link = serde_json::from_str(json).unwrap();
+        assert_eq!(link.media, "application/json");
+    }
+}

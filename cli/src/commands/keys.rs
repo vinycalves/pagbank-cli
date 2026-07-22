@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pagbank_sdk::{PagBankClient, PagBankConfig, Environment};
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::KeysAction;
 use crate::config::PbConfig;
@@ -17,7 +17,11 @@ fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagBankC
     Ok(PagBankClient::new(pagbank_config))
 }
 
-pub async fn run(action: KeysAction, env_override: Option<&str>, output_fmt: &crate::cli::OutputFormat) -> Result<()> {
+pub async fn run(
+    action: KeysAction,
+    env_override: Option<&str>,
+    output_fmt: &crate::cli::OutputFormat,
+) -> Result<()> {
     let config = PbConfig::load()?;
     let client = make_client(&config, env_override)?;
 
@@ -27,7 +31,9 @@ pub async fn run(action: KeysAction, env_override: Option<&str>, output_fmt: &cr
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Chave Pública Criada", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Chave Pública Criada", &val)
+                }
             }
             Ok(())
         }
@@ -36,7 +42,9 @@ pub async fn run(action: KeysAction, env_override: Option<&str>, output_fmt: &cr
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Chave Pública", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Chave Pública", &val)
+                }
             }
             Ok(())
         }
@@ -46,7 +54,9 @@ pub async fn run(action: KeysAction, env_override: Option<&str>, output_fmt: &cr
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Chave Pública Atualizada", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Chave Pública Atualizada", &val)
+                }
             }
             Ok(())
         }

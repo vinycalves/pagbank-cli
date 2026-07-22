@@ -5,6 +5,20 @@ Todos os notáveis alterações neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.1.1] - 2026-07-22
+
+### Added
+- Testes unitários: Environment, Service, PagBankError, todos os modelos
+- Testes unitários: PbConfig (CLI), serialização/desserialização TOML
+- Mensagem de report de bugs em errors: reportar em https://github.com/vinycalves/pagbank-cli/issues
+- Workflow CI (fmt, check, test, clippy) em push/PR
+- Workflow release (crates.io, GitHub Release, AUR, Homebrew, .deb, .rpm)
+
+### Fixed
+- Compatibilidade sha2 v0.11 (LowerHex não implementado para GenericArray)
+- Feature rustls-tls renomeada para rustls no reqwest 0.13
+- Dependências pinadas para versões específicas
+
 ## [Unreleased]
 
 ### Added

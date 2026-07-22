@@ -1,6 +1,6 @@
 pub mod accounts;
-pub mod charges;
 pub mod certificates;
+pub mod charges;
 pub mod checkouts;
 pub mod clubpag;
 pub mod connect;

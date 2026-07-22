@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pagbank_sdk::{PagBankClient, PagBankConfig, Environment};
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::CheckoutsAction;
 use crate::config::PbConfig;
@@ -17,18 +17,32 @@ fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagBankC
     Ok(PagBankClient::new(pagbank_config))
 }
 
-pub async fn run(action: CheckoutsAction, env_override: Option<&str>, output_fmt: &crate::cli::OutputFormat) -> Result<()> {
+pub async fn run(
+    action: CheckoutsAction,
+    env_override: Option<&str>,
+    output_fmt: &crate::cli::OutputFormat,
+) -> Result<()> {
     let config = PbConfig::load()?;
     let client = make_client(&config, env_override)?;
 
     match action {
-        CheckoutsAction::Create { name, amount, description, redirect_url, payment_methods } => {
+        CheckoutsAction::Create {
+            name,
+            amount,
+            description,
+            redirect_url,
+            payment_methods,
+        } => {
             let mut body = serde_json::json!({
                 "name": name,
                 "amount": { "value": amount, "currency": "BRL" },
             });
-            if let Some(d) = description { body["description"] = serde_json::json!(d); }
-            if let Some(r) = redirect_url { body["redirect_url"] = serde_json::json!(r); }
+            if let Some(d) = description {
+                body["description"] = serde_json::json!(d);
+            }
+            if let Some(r) = redirect_url {
+                body["redirect_url"] = serde_json::json!(r);
+            }
             if let Some(pm) = payment_methods {
                 let methods: Vec<String> = pm.split(',').map(|s| s.trim().to_string()).collect();
                 body["payment_methods"] = serde_json::json!(methods);
@@ -37,7 +51,9 @@ pub async fn run(action: CheckoutsAction, env_override: Option<&str>, output_fmt
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Checkout Criado", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Checkout Criado", &val)
+                }
             }
             Ok(())
         }

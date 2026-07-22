@@ -51,17 +51,17 @@ pub async fn pay(
     crate::models::parse_response(resp).await
 }
 
-pub async fn get_split(client: &PagBankClient, order_id: &str) -> Result<serde_json::Value, PagBankError> {
+pub async fn get_split(
+    client: &PagBankClient,
+    order_id: &str,
+) -> Result<serde_json::Value, PagBankError> {
     let resp = client
         .get(Service::Main, &format!("/orders/{order_id}/splits"))
         .await?;
     crate::models::parse_response(resp).await
 }
 
-pub async fn release_split(
-    client: &PagBankClient,
-    order_id: &str,
-) -> Result<(), PagBankError> {
+pub async fn release_split(client: &PagBankClient, order_id: &str) -> Result<(), PagBankError> {
     let body = serde_json::json!({});
     let resp = client
         .post(

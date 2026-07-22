@@ -16,7 +16,11 @@ pub async fn run(action: ConfigAction) -> Result<()> {
                 .default(0)
                 .interact()?;
 
-            let env_str = if environment == 0 { "sandbox" } else { "production" };
+            let env_str = if environment == 0 {
+                "sandbox"
+            } else {
+                "production"
+            };
 
             let recurring_token = dialoguer::Input::<String>::new()
                 .with_prompt("Token de recorrência (vazio para pular)")
@@ -61,7 +65,14 @@ pub async fn run(action: ConfigAction) -> Result<()> {
                 "(não configurado)"
             };
             println!("Token recorrência: {recurring_display}");
-            println!("Client ID: {}", config.default.client_id.as_deref().unwrap_or("(não configurado)"));
+            println!(
+                "Client ID: {}",
+                config
+                    .default
+                    .client_id
+                    .as_deref()
+                    .unwrap_or("(não configurado)")
+            );
             Ok(())
         }
     }

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pagbank_sdk::{PagBankClient, PagBankConfig, Environment};
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::CouponsAction;
 use crate::config::PbConfig;
@@ -17,12 +17,23 @@ fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagBankC
     Ok(PagBankClient::new(pagbank_config))
 }
 
-pub async fn run(action: CouponsAction, env_override: Option<&str>, output_fmt: &crate::cli::OutputFormat) -> Result<()> {
+pub async fn run(
+    action: CouponsAction,
+    env_override: Option<&str>,
+    output_fmt: &crate::cli::OutputFormat,
+) -> Result<()> {
     let config = PbConfig::load()?;
     let client = make_client(&config, env_override)?;
 
     match action {
-        CouponsAction::Create { name, discount_type, discount_value, description, reference_id, limit } => {
+        CouponsAction::Create {
+            name,
+            discount_type,
+            discount_value,
+            description,
+            reference_id,
+            limit,
+        } => {
             let mut body = serde_json::json!({
                 "name": name,
                 "discount": {
@@ -30,9 +41,15 @@ pub async fn run(action: CouponsAction, env_override: Option<&str>, output_fmt: 
                     "value": discount_value,
                 },
             });
-            if let Some(d) = description { body["description"] = serde_json::json!(d); }
-            if let Some(ri) = reference_id { body["reference_id"] = serde_json::json!(ri); }
-            if let Some(l) = limit { body["limit"] = serde_json::json!(l); }
+            if let Some(d) = description {
+                body["description"] = serde_json::json!(d);
+            }
+            if let Some(ri) = reference_id {
+                body["reference_id"] = serde_json::json!(ri);
+            }
+            if let Some(l) = limit {
+                body["limit"] = serde_json::json!(l);
+            }
             let result = pagbank_sdk::endpoints::coupons::create(&client, &body).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
@@ -61,13 +78,16 @@ pub async fn run(action: CouponsAction, env_override: Option<&str>, output_fmt: 
                 crate::cli::OutputFormat::Json => output::print_json(&val),
                 crate::cli::OutputFormat::Table => {
                     if let Some(arr) = val.as_array() {
-                        let rows: Vec<Vec<String>> = arr.iter().map(|c| {
-                            vec![
-                                c["id"].as_str().unwrap_or("").to_string(),
-                                c["name"].as_str().unwrap_or("").to_string(),
-                                c["status"].as_str().unwrap_or("").to_string(),
-                            ]
-                        }).collect();
+                        let rows: Vec<Vec<String>> = arr
+                            .iter()
+                            .map(|c| {
+                                vec![
+                                    c["id"].as_str().unwrap_or("").to_string(),
+                                    c["name"].as_str().unwrap_or("").to_string(),
+                                    c["status"].as_str().unwrap_or("").to_string(),
+                                ]
+                            })
+                            .collect();
                         output::print_table(&["ID", "Nome", "Status"], rows);
                     }
                 }

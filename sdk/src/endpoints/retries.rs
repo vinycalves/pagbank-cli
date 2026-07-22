@@ -26,10 +26,7 @@ pub async fn update(
     crate::models::parse_response(resp).await
 }
 
-pub async fn retry_now(
-    client: &PagBankClient,
-    id: &str,
-) -> Result<Retry, PagBankError> {
+pub async fn retry_now(client: &PagBankClient, id: &str) -> Result<Retry, PagBankError> {
     let body = serde_json::json!({});
     let resp = client
         .put(

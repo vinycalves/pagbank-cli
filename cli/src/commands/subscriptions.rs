@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pagbank_sdk::{PagBankClient, PagBankConfig, Environment};
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::SubscriptionsAction;
 use crate::config::PbConfig;
@@ -17,22 +17,34 @@ fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagBankC
     Ok(PagBankClient::new(pagbank_config))
 }
 
-pub async fn run(action: SubscriptionsAction, env_override: Option<&str>, output_fmt: &crate::cli::OutputFormat) -> Result<()> {
+pub async fn run(
+    action: SubscriptionsAction,
+    env_override: Option<&str>,
+    output_fmt: &crate::cli::OutputFormat,
+) -> Result<()> {
     let config = PbConfig::load()?;
     let client = make_client(&config, env_override)?;
 
     match action {
-        SubscriptionsAction::Create { plan_id, subscriber_id, start_at } => {
+        SubscriptionsAction::Create {
+            plan_id,
+            subscriber_id,
+            start_at,
+        } => {
             let mut body = serde_json::json!({
                 "plan_id": plan_id,
                 "customer_id": subscriber_id,
             });
-            if let Some(s) = start_at { body["start_at"] = serde_json::json!(s); }
+            if let Some(s) = start_at {
+                body["start_at"] = serde_json::json!(s);
+            }
             let result = pagbank_sdk::endpoints::subscriptions::create(&client, &body).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Assinatura Criada", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Assinatura Criada", &val)
+                }
             }
             Ok(())
         }
@@ -45,26 +57,35 @@ pub async fn run(action: SubscriptionsAction, env_override: Option<&str>, output
             }
             Ok(())
         }
-        SubscriptionsAction::List { status, page, per_page } => {
+        SubscriptionsAction::List {
+            status,
+            page,
+            per_page,
+        } => {
             let mut params = vec![
                 ("page".to_string(), page.to_string()),
                 ("per_page".to_string(), per_page.to_string()),
             ];
-            if let Some(s) = status { params.push(("status".to_string(), s)); }
+            if let Some(s) = status {
+                params.push(("status".to_string(), s));
+            }
             let result = pagbank_sdk::endpoints::subscriptions::list(&client, &params).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
                 crate::cli::OutputFormat::Table => {
                     if let Some(arr) = val.as_array() {
-                        let rows: Vec<Vec<String>> = arr.iter().map(|s| {
-                            vec![
-                                s["id"].as_str().unwrap_or("").to_string(),
-                                s["plan_id"].as_str().unwrap_or("").to_string(),
-                                s["customer_id"].as_str().unwrap_or("").to_string(),
-                                s["status"].as_str().unwrap_or("").to_string(),
-                            ]
-                        }).collect();
+                        let rows: Vec<Vec<String>> = arr
+                            .iter()
+                            .map(|s| {
+                                vec![
+                                    s["id"].as_str().unwrap_or("").to_string(),
+                                    s["plan_id"].as_str().unwrap_or("").to_string(),
+                                    s["customer_id"].as_str().unwrap_or("").to_string(),
+                                    s["status"].as_str().unwrap_or("").to_string(),
+                                ]
+                            })
+                            .collect();
                         output::print_table(&["ID", "Plano", "Assinante", "Status"], rows);
                     }
                 }
@@ -73,12 +94,16 @@ pub async fn run(action: SubscriptionsAction, env_override: Option<&str>, output
         }
         SubscriptionsAction::Update { id, plan_id } => {
             let mut body = serde_json::json!({});
-            if let Some(p) = plan_id { body["plan_id"] = serde_json::json!(p); }
+            if let Some(p) = plan_id {
+                body["plan_id"] = serde_json::json!(p);
+            }
             let result = pagbank_sdk::endpoints::subscriptions::update(&client, &id, &body).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => output::print_object_table("Assinatura Atualizada", &val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Assinatura Atualizada", &val)
+                }
             }
             Ok(())
         }
@@ -103,7 +128,8 @@ pub async fn run(action: SubscriptionsAction, env_override: Option<&str>, output
             Ok(())
         }
         SubscriptionsAction::Activate { id } => {
-            let result = pagbank_sdk::endpoints::subscriptions::activate_subscription(&client, &id).await?;
+            let result =
+                pagbank_sdk::endpoints::subscriptions::activate_subscription(&client, &id).await?;
             let val = serde_json::to_value(result)?;
             output::print_success("Assinatura ativada");
             match output_fmt {
@@ -120,14 +146,17 @@ pub async fn run(action: SubscriptionsAction, env_override: Option<&str>, output
                 crate::cli::OutputFormat::Json => output::print_json(&val),
                 crate::cli::OutputFormat::Table => {
                     if let Some(arr) = val.as_array() {
-                        let rows: Vec<Vec<String>> = arr.iter().map(|i| {
-                            vec![
-                                i["id"].as_str().unwrap_or("").to_string(),
-                                i["status"].as_str().unwrap_or("").to_string(),
-                                i["amount"]["total"].to_string(),
-                                i["paid_at"].as_str().unwrap_or("").to_string(),
-                            ]
-                        }).collect();
+                        let rows: Vec<Vec<String>> = arr
+                            .iter()
+                            .map(|i| {
+                                vec![
+                                    i["id"].as_str().unwrap_or("").to_string(),
+                                    i["status"].as_str().unwrap_or("").to_string(),
+                                    i["amount"]["total"].to_string(),
+                                    i["paid_at"].as_str().unwrap_or("").to_string(),
+                                ]
+                            })
+                            .collect();
                         output::print_table(&["ID", "Status", "Total", "Pago em"], rows);
                     }
                 }
