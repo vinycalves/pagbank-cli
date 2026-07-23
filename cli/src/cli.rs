@@ -351,14 +351,10 @@ pub enum OrdersAction {
         #[arg(help = "ID do pedido PagBank (ex: ORDE_XXXX-XXXX)")]
         id: String,
     },
-    #[command(about = "Listar pedidos com filtros")]
+    #[command(about = "Buscar pedido por ID da cobrança (charge)")]
     List {
-        #[arg(long, help = "Filtrar por status (PAID, WAITING, CANCELED, etc.)")]
-        status: Option<String>,
-        #[arg(long, default_value = "1", help = "Número da página para paginação")]
-        page: i32,
-        #[arg(long, default_value = "20", help = "Itens por página (max 100)")]
-        per_page: i32,
+        #[arg(long, help = "ID da cobrança (charge) para localizar o pedido")]
+        charge_id: String,
     },
     #[command(about = "Pagar um pedido (após criado)")]
     Pay {

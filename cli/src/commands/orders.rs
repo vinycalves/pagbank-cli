@@ -142,18 +142,8 @@ pub async fn run(
             }
             Ok(())
         }
-        OrdersAction::List {
-            status,
-            page,
-            per_page,
-        } => {
-            let mut params = vec![
-                ("page".to_string(), page.to_string()),
-                ("per_page".to_string(), per_page.to_string()),
-            ];
-            if let Some(s) = status {
-                params.push(("status".to_string(), s));
-            }
+        OrdersAction::List { charge_id } => {
+            let params = vec![("charge_id".to_string(), charge_id)];
             let result = pagbank_sdk::endpoints::orders::list(&client, &params).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
