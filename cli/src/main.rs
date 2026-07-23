@@ -96,7 +96,7 @@ async fn main() -> anyhow::Result<()> {
         cli::Commands::Completion { shell } => {
             generate_completion(shell);
             Ok(())
-        },
+        }
     };
 
     if let Err(e) = result {
