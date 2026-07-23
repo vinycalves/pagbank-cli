@@ -35,6 +35,7 @@ jobs:
   publish-sdk:
     needs: test
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - uses: actions/checkout@v5
       - uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -53,6 +54,7 @@ jobs:
   publish-cli:
     needs: publish-sdk
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - uses: actions/checkout@v5
       - uses: actions-rust-lang/setup-rust-toolchain@v1
