@@ -1,4 +1,5 @@
 use anyhow::Result;
+use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::AuthAction;
 use crate::config::PbConfig;
@@ -40,7 +41,20 @@ pub async fn run(action: AuthAction) -> Result<()> {
                 if config.default.client_id.is_some() {
                     output::print_info("Client ID (Connect): configurado");
                 }
-                output::print_info("Execute 'pb orders list' para testar a conexão com a API");
+
+                let pagbank_config = PagBankConfig {
+                    environment: env.parse().unwrap_or(Environment::Sandbox),
+                    token: token.clone(),
+                    recurring_token: config.default.recurring_token.clone(),
+                    client_id: config.default.client_id.clone(),
+                    client_secret: config.default.client_secret.clone(),
+                };
+                let client = PagBankClient::new(pagbank_config);
+
+                match pagbank_sdk::endpoints::accounts::get(&client, "me").await {
+                    Ok(_) => output::print_success("Conexão com API: OK"),
+                    Err(e) => output::print_error(&format!("Erro ao conectar: {e}")),
+                }
             }
             Ok(())
         }

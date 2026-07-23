@@ -1,6 +1,7 @@
 mod cli;
 mod commands;
 mod config;
+mod errors;
 mod output;
 
 use clap::Parser;
@@ -93,7 +94,12 @@ async fn main() -> anyhow::Result<()> {
     };
 
     if let Err(e) = result {
-        output::print_error(&e.to_string());
+        let msg = if let Some(pagbank_err) = e.downcast_ref::<pagbank_sdk::PagBankError>() {
+            errors::translate(pagbank_err)
+        } else {
+            e.to_string()
+        };
+        output::print_error(&msg);
         std::process::exit(1);
     }
 

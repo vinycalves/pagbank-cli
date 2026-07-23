@@ -142,16 +142,46 @@ impl PagBankClient {
                 .get("error_code")
                 .or_else(|| json.get("code"))
                 .and_then(|v| v.as_str())
-                .or_else(|| json.get("error_code").and_then(|v| v.as_i64().map(|_| "")))
+                .or_else(|| {
+                    json.get("error_messages")
+                        .and_then(|v| v.as_array())
+                        .and_then(|arr| arr.first())
+                        .and_then(|e| e.get("code"))
+                        .and_then(|v| v.as_str())
+                })
                 .unwrap_or("UNKNOWN")
                 .to_string();
 
             let message = json
                 .get("message")
+                .or_else(|| json.get("Message"))
                 .or_else(|| json.get("error_message"))
                 .and_then(|v| v.as_str())
-                .unwrap_or(&body)
-                .to_string();
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| {
+                    json.get("error_messages")
+                        .and_then(|v| v.as_array())
+                        .and_then(|arr| {
+                            let parts: Vec<String> = arr
+                                .iter()
+                                .filter_map(|e| {
+                                    let desc = e.get("description").and_then(|v| v.as_str()).unwrap_or("");
+                                    let param = e.get("parameter_name").and_then(|v| v.as_str());
+                                    match param {
+                                        Some(p) => Some(format!("{p}: {desc}")),
+                                        None if !desc.is_empty() => Some(desc.to_string()),
+                                        None => None,
+                                    }
+                                })
+                                .collect();
+                            if parts.is_empty() {
+                                None
+                            } else {
+                                Some(parts.join("; "))
+                            }
+                        })
+                        .unwrap_or(body.clone())
+                });
 
             return Err(PagBankError::Api {
                 status,

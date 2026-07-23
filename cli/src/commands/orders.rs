@@ -45,11 +45,25 @@ pub async fn run(
             notification_url,
             qr_amount,
         } => {
-            let mut charges = Vec::new();
-            let mut payment_method = serde_json::json!({ "type": method.to_uppercase() });
+            if let Err(msg) = crate::errors::validate_order_create(&method, qr_amount) {
+                anyhow::bail!(msg);
+            }
 
-            match method.to_lowercase().as_str() {
+            let charge = match method.to_lowercase().as_str() {
+                "pix" => {
+                    serde_json::json!({
+                        "amount": { "value": item_amount, "currency": "BRL" },
+                        "payment_method": {
+                            "type": "PIX",
+                            "pix": {
+                                "holder": { "name": &customer_name, "tax_id": &customer_tax_id },
+                                "expiration_date": "2026-12-31T23:59:59-03:00"
+                            }
+                        },
+                    })
+                }
                 "credit_card" | "debit_card" => {
+                    let mut payment_method = serde_json::json!({ "type": method.to_uppercase() });
                     let card = serde_json::json!({
                         "number": card_number.unwrap_or_default(),
                         "exp_month": card_exp_month.unwrap_or(0),
@@ -67,29 +81,21 @@ pub async fn run(
                             payment_method["installments"] = serde_json::json!(inst);
                         }
                     }
+                    serde_json::json!({
+                        "amount": { "value": item_amount, "currency": "BRL" },
+                        "payment_method": payment_method,
+                    })
                 }
-                _ => {}
-            }
-
-            let charge = serde_json::json!({
-                "amount": { "value": item_amount, "currency": "BRL" },
-                "payment_method": payment_method,
-            });
-            charges.push(charge);
-
-            let mut qr_codes = Vec::new();
-            if let Some(qa) = qr_amount {
-                qr_codes.push(serde_json::json!({
-                    "amount": { "value": qa, "currency": "BRL" }
-                }));
-            }
+                _ => anyhow::bail!("método de pagamento inválido: {method}"),
+            };
+            let charges = vec![charge];
 
             let mut notification_urls = Vec::new();
             if let Some(url) = notification_url {
                 notification_urls.push(url);
             }
 
-            let body = serde_json::json!({
+            let mut body = serde_json::json!({
                 "reference_id": reference_id,
                 "customer": {
                     "name": customer_name,
@@ -102,9 +108,16 @@ pub async fn run(
                     "unit_amount": item_amount,
                 }],
                 "charges": charges,
-                "qr_codes": if qr_codes.is_empty() { serde_json::json!([]) } else { serde_json::json!(qr_codes) },
                 "notification_urls": if notification_urls.is_empty() { serde_json::json!([]) } else { serde_json::json!(notification_urls) },
             });
+
+            if let Some(qa) = qr_amount {
+                if method.to_lowercase() != "pix" {
+                    body["qr_codes"] = serde_json::json!([{
+                        "amount": { "value": qa, "currency": "BRL" }
+                    }]);
+                }
+            }
 
             let result =
                 pagbank_sdk::endpoints::orders::create(&client, &body, &Default::default()).await?;
