@@ -5,6 +5,7 @@ mod errors;
 mod output;
 mod pix;
 
+use clap::CommandFactory;
 use clap::Parser;
 
 #[tokio::main]
@@ -92,6 +93,10 @@ async fn main() -> anyhow::Result<()> {
                 Ok(())
             }
         },
+        cli::Commands::Completion { shell } => {
+            generate_completion(shell);
+            Ok(())
+        },
     };
 
     if let Err(e) = result {
@@ -105,4 +110,17 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn generate_completion(shell: cli::Shell) {
+    use clap_complete::{generate, Shell};
+    let mut cmd = cli::Cli::command();
+    let shell = match shell {
+        cli::Shell::Bash => Shell::Bash,
+        cli::Shell::Zsh => Shell::Zsh,
+        cli::Shell::Fish => Shell::Fish,
+        cli::Shell::Powershell => Shell::PowerShell,
+        cli::Shell::Elvish => Shell::Elvish,
+    };
+    generate(shell, &mut cmd, "pb", &mut std::io::stdout());
 }

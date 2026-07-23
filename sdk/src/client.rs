@@ -165,7 +165,8 @@ impl PagBankClient {
                             let parts: Vec<String> = arr
                                 .iter()
                                 .filter_map(|e| {
-                                    let desc = e.get("description").and_then(|v| v.as_str()).unwrap_or("");
+                                    let desc =
+                                        e.get("description").and_then(|v| v.as_str()).unwrap_or("");
                                     let param = e.get("parameter_name").and_then(|v| v.as_str());
                                     match param {
                                         Some(p) => Some(format!("{p}: {desc}")),

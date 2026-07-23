@@ -76,7 +76,10 @@ fn save_png(b64: &str, path: &str) {
     use base64::Engine;
 
     let b64 = b64.trim();
-    let clean: String = b64.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '+' || *c == '/' || *c == '=').collect();
+    let clean: String = b64
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '+' || *c == '/' || *c == '=')
+        .collect();
     let padded = format!("{}{}", clean, "=".repeat((4 - clean.len() % 4) % 4));
 
     match base64::engine::general_purpose::STANDARD.decode(&padded) {

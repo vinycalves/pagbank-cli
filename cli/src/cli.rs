@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
 #[command(
@@ -122,6 +122,19 @@ pub enum Commands {
         #[command(subcommand)]
         action: WebhooksAction,
     },
+
+    #[command(about = "Gerar script de autocomplete para o shell")]
+    Completion { shell: Shell },
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum Shell {
+    Bash,
+    Zsh,
+    Fish,
+    #[clap(name = "powershell")]
+    Powershell,
+    Elvish,
 }
 
 #[derive(Subcommand)]

@@ -2,7 +2,11 @@ use pagbank_sdk::PagBankError;
 
 pub fn translate(err: &PagBankError) -> String {
     match err {
-        PagBankError::Api { status, code, message } => {
+        PagBankError::Api {
+            status,
+            code,
+            message,
+        } => {
             let friendly = api_message(status, code, message);
             format!("[{}] {friendly}", status)
         }
@@ -10,11 +14,18 @@ pub fn translate(err: &PagBankError) -> String {
             let friendly = api_raw_message(status, body);
             format!("[{}] {friendly}", status)
         }
-        PagBankError::Network(_) => "erro de rede: verifique sua conexão com a internet".to_string(),
+        PagBankError::Network(_) => {
+            "erro de rede: verifique sua conexão com a internet".to_string()
+        }
         PagBankError::Serialization(_) => "erro interno ao processar a resposta da API".to_string(),
         PagBankError::Url(_) => "URL inválida na requisição".to_string(),
-        PagBankError::NoToken => "token de autenticação não configurado. Use 'pb auth login --token <TOKEN>'".to_string(),
-        PagBankError::NoRecurringToken => "token de recorrência não configurado. Configure 'recurring_token' no config.toml".to_string(),
+        PagBankError::NoToken => {
+            "token de autenticação não configurado. Use 'pb auth login --token <TOKEN>'".to_string()
+        }
+        PagBankError::NoRecurringToken => {
+            "token de recorrência não configurado. Configure 'recurring_token' no config.toml"
+                .to_string()
+        }
         PagBankError::InvalidIdempotencyKey(_) => format!("{}", err),
         PagBankError::Auth(msg) => format!("erro de autenticação: {msg}"),
         PagBankError::Other(msg) => msg.clone(),
@@ -35,7 +46,9 @@ fn api_message(status: &u16, _code: &str, message: &str) -> String {
     }
 
     match *status {
-        401 => "token inválido. Use 'pb auth login --token <TOKEN>' com um token válido".to_string(),
+        401 => {
+            "token inválido. Use 'pb auth login --token <TOKEN>' com um token válido".to_string()
+        }
         403 => "sem permissão para acessar este recurso na sua conta PagBank".to_string(),
         404 => "recurso não encontrado. Verifique o ID informado".to_string(),
         422 => "dados inválidos. Verifique os campos enviados".to_string(),
@@ -94,10 +107,9 @@ fn translate_description(desc: &str) -> String {
         };
     }
 
-    if description.contains("Invalid credential")
-        || description.contains("Review AUTHORIZATION")
-    {
-        return "token inválido. Use 'pb auth login --token <TOKEN>' com um token válido".to_string();
+    if description.contains("Invalid credential") || description.contains("Review AUTHORIZATION") {
+        return "token inválido. Use 'pb auth login --token <TOKEN>' com um token válido"
+            .to_string();
     }
 
     if description.contains("No known parameter was given")
@@ -110,9 +122,7 @@ fn translate_description(desc: &str) -> String {
         };
     }
 
-    if description.contains("not authorized")
-        || description.contains("explicit deny")
-    {
+    if description.contains("not authorized") || description.contains("explicit deny") {
         return "token sem permissão para este recurso na sua conta PagBank".to_string();
     }
 
@@ -120,23 +130,20 @@ fn translate_description(desc: &str) -> String {
         return "recurso não encontrado. Verifique o ID informado".to_string();
     }
 
-    if description.contains("rate limit")
-        || description.contains("too many requests")
-    {
+    if description.contains("rate limit") || description.contains("too many requests") {
         return "muitas requisições. Aguarde alguns segundos e tente novamente".to_string();
     }
 
     desc.to_string()
 }
 
-pub fn validate_order_create(
-    method: &str,
-    _qr_amount: Option<i64>,
-) -> Result<(), String> {
+pub fn validate_order_create(method: &str, _qr_amount: Option<i64>) -> Result<(), String> {
     match method.to_lowercase().as_str() {
         "pix" => Ok(()),
         "credit_card" | "debit_card" => Ok(()),
-        _ => Err(format!("método de pagamento inválido: {method}. Use pix, credit_card ou debit_card")),
+        _ => Err(format!(
+            "método de pagamento inválido: {method}. Use pix, credit_card ou debit_card"
+        )),
     }
 }
 
@@ -249,8 +256,6 @@ mod tests {
         let msg = translate(&err);
         assert!(msg.contains("token inválido"));
     }
-
-
 
     #[test]
     fn validate_order_create_pix_without_qr() {
