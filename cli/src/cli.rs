@@ -170,8 +170,14 @@ pub enum ConfigAction {
 
 #[derive(Subcommand)]
 pub enum KeysAction {
-    #[command(about = "Criar nova chave pública")]
-    Create,
+    #[command(about = "Criar nova chave pública para criptografia de cartão")]
+    Create {
+        #[arg(
+            long,
+            help = "Tipo da chave: CARD, ANDROID, IOS, WEB (define onde o cartão criptografado será usado)"
+        )]
+        r#type: String,
+    },
     #[command(about = "Consultar chave pública pelo ID")]
     Get { id: String },
     #[command(about = "Alterar chave pública existente")]

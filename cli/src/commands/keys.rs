@@ -26,8 +26,8 @@ pub async fn run(
     let client = make_client(&config, env_override)?;
 
     match action {
-        KeysAction::Create => {
-            let result = pagbank_sdk::endpoints::public_keys::create(&client).await?;
+        KeysAction::Create { r#type } => {
+            let result = pagbank_sdk::endpoints::public_keys::create(&client, &r#type).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
