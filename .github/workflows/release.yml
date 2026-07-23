@@ -221,6 +221,7 @@ jobs:
   aur:
     needs: create-release
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - uses: actions/checkout@v5
       - name: Generate PKGBUILD from template
@@ -261,6 +262,7 @@ jobs:
   homebrew:
     needs: create-release
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - uses: actions/checkout@v5
       - name: Generate formula from template
