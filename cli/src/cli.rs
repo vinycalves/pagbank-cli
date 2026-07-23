@@ -178,10 +178,16 @@ pub enum KeysAction {
         )]
         r#type: String,
     },
-    #[command(about = "Consultar chave pública pelo ID")]
-    Get { id: String },
+    #[command(about = "Consultar chave pública pelo ID gerado na criação")]
+    Get {
+        #[arg(help = "ID da chave pública (ex: 123e4567-e89b-12d3-a456-426614174000)")]
+        id: String,
+    },
     #[command(about = "Alterar chave pública existente")]
-    Update { id: String },
+    Update {
+        #[arg(help = "ID da chave pública a ser alterada")]
+        id: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -203,7 +209,10 @@ pub enum ConnectAction {
         logo: Option<String>,
     },
     #[command(about = "Consultar dados de uma aplicação Connect")]
-    AppGet { id: String },
+    AppGet {
+        #[arg(help = "ID da aplicação Connect (retornado no app-create)")]
+        id: String,
+    },
     #[command(about = "Gerar URL de autorização OAuth2 para redirecionar o usuário")]
     Authorize {
         #[arg(long, help = "ID da aplicação Connect")]
@@ -273,7 +282,10 @@ pub enum AccountsAction {
         tos_ip: String,
     },
     #[command(about = "Consultar dados de uma conta pelo ID")]
-    Get { id: String },
+    Get {
+        #[arg(help = "ID da conta PagBank (ex: ACC_XXXX)")]
+        id: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -335,7 +347,10 @@ pub enum OrdersAction {
         pix_save: Option<String>,
     },
     #[command(about = "Consultar pedido pelo ID PagBank")]
-    Get { id: String },
+    Get {
+        #[arg(help = "ID do pedido PagBank (ex: ORDE_XXXX-XXXX)")]
+        id: String,
+    },
     #[command(about = "Listar pedidos com filtros")]
     List {
         #[arg(long, help = "Filtrar por status (PAID, WAITING, CANCELED, etc.)")]
@@ -371,15 +386,30 @@ pub enum OrdersAction {
         card_id: Option<String>,
     },
     #[command(about = "Capturar pagamento autorizado")]
-    Capture { charge_id: String },
+    Capture {
+        #[arg(help = "ID da cobrança (charge) a ser capturada")]
+        charge_id: String,
+    },
     #[command(about = "Cancelar pagamento")]
-    Cancel { charge_id: String },
+    Cancel {
+        #[arg(help = "ID da cobrança (charge) a ser cancelada")]
+        charge_id: String,
+    },
     #[command(about = "Consultar divisão do pagamento (splits)")]
-    Split { order_id: String },
+    Split {
+        #[arg(help = "ID do pedido (order) para consultar split")]
+        order_id: String,
+    },
     #[command(about = "Liberar divisão com custódia")]
-    SplitRelease { order_id: String },
+    SplitRelease {
+        #[arg(help = "ID do pedido (order) para liberar split")]
+        order_id: String,
+    },
     #[command(about = "Consultar taxas de uma transação")]
-    Fees { charge_id: String },
+    Fees {
+        #[arg(help = "ID da cobrança (charge) para consultar taxas")]
+        charge_id: String,
+    },
     #[command(about = "Validar e armazenar cartão para uso futuro")]
     CardStore {
         #[arg(long, help = "Número do cartão")]
@@ -416,11 +446,20 @@ pub enum CheckoutsAction {
         payment_methods: Option<String>,
     },
     #[command(about = "Consultar checkout pelo ID")]
-    Get { id: String },
+    Get {
+        #[arg(help = "ID do checkout PagBank")]
+        id: String,
+    },
     #[command(about = "Ativar checkout")]
-    Activate { id: String },
+    Activate {
+        #[arg(help = "ID do checkout a ser ativado")]
+        id: String,
+    },
     #[command(about = "Inativar checkout")]
-    Deactivate { id: String },
+    Deactivate {
+        #[arg(help = "ID do checkout a ser inativado")]
+        id: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -450,7 +489,10 @@ pub enum PlansAction {
         trial_unit: Option<String>,
     },
     #[command(about = "Consultar plano pelo ID")]
-    Get { id: String },
+    Get {
+        #[arg(help = "ID do plano PagBank")]
+        id: String,
+    },
     #[command(about = "Listar planos cadastrados")]
     List {
         #[arg(long, default_value = "1", help = "Número da página")]
@@ -469,9 +511,15 @@ pub enum PlansAction {
         description: Option<String>,
     },
     #[command(about = "Ativar plano")]
-    Activate { id: String },
+    Activate {
+        #[arg(help = "ID do plano a ser ativado")]
+        id: String,
+    },
     #[command(about = "Inativar plano")]
-    Deactivate { id: String },
+    Deactivate {
+        #[arg(help = "ID do plano a ser inativado")]
+        id: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -494,7 +542,10 @@ pub enum SubscribersAction {
         phone_type: Option<String>,
     },
     #[command(about = "Consultar assinante pelo ID")]
-    Get { id: String },
+    Get {
+        #[arg(help = "ID do assinante")]
+        id: String,
+    },
     #[command(about = "Listar assinantes")]
     List {
         #[arg(long, default_value = "1", help = "Número da página")]
@@ -545,7 +596,10 @@ pub enum SubscriptionsAction {
         start_at: Option<String>,
     },
     #[command(about = "Consultar assinatura pelo ID")]
-    Get { id: String },
+    Get {
+        #[arg(help = "ID da assinatura PagBank")]
+        id: String,
+    },
     #[command(about = "Listar assinaturas")]
     List {
         #[arg(long, help = "Filtrar por status (ACTIVE, CANCELED, SUSPENDED, etc.)")]
@@ -562,13 +616,25 @@ pub enum SubscriptionsAction {
         plan_id: Option<String>,
     },
     #[command(about = "Cancelar assinatura")]
-    Cancel { id: String },
+    Cancel {
+        #[arg(help = "ID da assinatura a ser cancelada")]
+        id: String,
+    },
     #[command(about = "Suspender assinatura temporariamente")]
-    Suspend { id: String },
+    Suspend {
+        #[arg(help = "ID da assinatura a ser suspensa")]
+        id: String,
+    },
     #[command(about = "Reativar assinatura suspensa")]
-    Activate { id: String },
+    Activate {
+        #[arg(help = "ID para ativar")]
+        id: String,
+    },
     #[command(about = "Listar faturas geradas pela assinatura")]
-    Invoices { id: String },
+    Invoices {
+        #[arg(help = "ID da assinatura para listar faturas")]
+        id: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -589,7 +655,10 @@ pub enum CouponsAction {
         limit: Option<i64>,
     },
     #[command(about = "Consultar cupom pelo ID")]
-    Get { id: String },
+    Get {
+        #[arg(help = "ID do cupom PagBank")]
+        id: String,
+    },
     #[command(about = "Listar cupons cadastrados")]
     List {
         #[arg(long, default_value = "1", help = "Número da página")]
@@ -598,27 +667,46 @@ pub enum CouponsAction {
         per_page: i32,
     },
     #[command(about = "Ativar cupom")]
-    Activate { id: String },
+    Activate {
+        #[arg(help = "ID para ativar")]
+        id: String,
+    },
     #[command(about = "Inativar cupom")]
-    Deactivate { id: String },
+    Deactivate {
+        #[arg(help = "ID do cupom a ser inativado")]
+        id: String,
+    },
 }
 
 #[derive(Subcommand)]
 pub enum InvoicesAction {
     #[command(about = "Consultar fatura pelo ID")]
-    Get { id: String },
+    Get {
+        #[arg(help = "ID da fatura PagBank")]
+        id: String,
+    },
     #[command(about = "Listar pagamentos de uma fatura")]
-    Payments { invoice_id: String },
+    Payments {
+        #[arg(help = "ID da fatura para listar pagamentos")]
+        invoice_id: String,
+    },
     #[command(about = "Criar estorno de um pagamento")]
     Refund {
+        #[arg(help = "ID do pagamento a ser estornado")]
         payment_id: String,
         #[arg(long, help = "Valor do estorno em centavos (padrão: valor total)")]
         amount: Option<i64>,
     },
     #[command(about = "Listar estornos de um pagamento")]
-    ListRefunds { payment_id: String },
+    ListRefunds {
+        #[arg(help = "ID do pagamento para listar estornos")]
+        payment_id: String,
+    },
     #[command(about = "Consultar pagamento recorrente pelo ID")]
-    GetPayment { payment_id: String },
+    GetPayment {
+        #[arg(help = "ID do pagamento recorrente")]
+        payment_id: String,
+    },
 }
 
 #[derive(Subcommand)]
