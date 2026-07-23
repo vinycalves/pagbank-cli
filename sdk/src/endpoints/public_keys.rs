@@ -3,8 +3,8 @@ use crate::config::Service;
 use crate::error::PagBankError;
 use crate::models::PublicKey;
 
-pub async fn create(client: &PagBankClient) -> Result<PublicKey, PagBankError> {
-    let body = serde_json::json!({});
+pub async fn create(client: &PagBankClient, key_type: &str) -> Result<PublicKey, PagBankError> {
+    let body = serde_json::json!({ "type": key_type });
     let resp = client
         .post(
             Service::Main,

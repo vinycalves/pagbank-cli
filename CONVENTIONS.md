@@ -63,6 +63,23 @@ git push origin main --follow-tags
 
 O GitHub Actions valida que a tag bate com o `Cargo.toml`. Se não bater, a pipeline falha.
 
+## Testes (OBRIGATÓRIO)
+
+Toda alteração no código DEVE vir acompanhada de testes. Sem exceção.
+
+| Tipo de mudança | Onde testar | O que testar |
+|----------------|-------------|--------------|
+| Nova função/struct no SDK | `#[cfg(test)]` no próprio arquivo | Serialização, parsing, casos de borda |
+| Novo comando no CLI | `#[cfg(test)]` no módulo | Validação de args, formatação de output |
+| Tradução de erro | `errors.rs` | Mensagem traduzida para cada código HTTP |
+| Extração de dados (PIX, etc.) | Teste unitário sem rede | Parse de JSON, transformação de dados |
+
+**Regras:**
+- `cargo test` deve passar antes de qualquer commit
+- Testes devem rodar em frações de segundo (sem rede, sem IO)
+- Se o teste precisa de IO (ex: salvar arquivo), use `/tmp/` e limpe depois
+- NUNCA suba código sem `#[test]` correspondente
+
 ## Pré-push Hook
 
 O script `scripts/pre-push` roda `fmt + check + test + clippy` antes de cada push.

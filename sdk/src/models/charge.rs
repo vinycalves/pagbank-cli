@@ -85,9 +85,9 @@ pub struct Card {
     pub number: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub network_token: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "de_string_to_i32_opt")]
     pub exp_month: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "de_string_to_i32_opt")]
     pub exp_year: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub security_code: Option<String>,
@@ -103,6 +103,27 @@ pub struct Card {
     pub last_digits: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub holder: Option<CardHolder>,
+}
+
+fn de_string_to_i32_opt<'de, D>(deserializer: D) -> Result<Option<i32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de;
+    struct StringOrInt;
+    impl<'de> de::Visitor<'de> for StringOrInt {
+        type Value = Option<i32>;
+        fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            f.write_str("string or integer")
+        }
+        fn visit_i64<E: de::Error>(self, v: i64) -> Result<Option<i32>, E> {
+            Ok(Some(v as i32))
+        }
+        fn visit_str<E: de::Error>(self, v: &str) -> Result<Option<i32>, E> {
+            Ok(v.parse::<i32>().ok())
+        }
+    }
+    deserializer.deserialize_any(StringOrInt)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
