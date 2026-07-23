@@ -21,6 +21,36 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-07-22
+
+### Added
+- CARGO_REGISTRY_TOKEN configurado — publish automático no crates.io
+
+## [0.1.4] - 2026-07-22
+
+### Added
+- Reposicionamento do `dev` para sincronizar com `main`
+
+## [0.1.3] - 2026-07-22
+
+### Added
+- Tradução de erros da API para português (errors.rs)
+- PIX QR code: `--pix` (exibir base64) e `--pix-save` (exportar PNG)
+- Autocomplete: `pb completion bash|zsh|fish|powershell|elvish`
+- Docs completa da API PagBank em `docs/api-pagbank.md`
+- AUR: pacote `pagbank-cli-bin` publicado
+- CI/CD: release automática (crates.io, GitHub Release, AUR, Homebrew, .deb, .rpm)
+- Testes: 35 testes unitários
+- `--help` descritivo em todos os argumentos
+
+### Fixed
+- `auth status`: remove chamada inválida a `/accounts/me`
+- `orders list`: busca por `charge_id` (único parâmetro aceito)
+- `accounts create`: adiciona `type` e `tos_acceptance`
+- `keys create`: adiciona `--type` obrigatório
+- PIX: `expiration_date` e `holder` no payment_method
+- `exp_month`/`exp_year`: aceita string ou int na desserialização
+
 ### Added
 - Workspace com dois crates: `pagbank-sdk` e `pb`
 - SDK completa com HTTP client assíncrono (reqwest + tokio)
