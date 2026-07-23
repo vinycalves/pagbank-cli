@@ -32,7 +32,7 @@ pub fn translate(err: &PagBankError) -> String {
     }
 }
 
-fn api_message(status: &u16, _code: &str, message: &str) -> String {
+fn api_message(status: &u16, code: &str, message: &str) -> String {
     let friendly = translate_description(message);
     if friendly != message {
         return friendly;
@@ -43,6 +43,16 @@ fn api_message(status: &u16, _code: &str, message: &str) -> String {
             Some(p) => format!("parâmetro '{p}': {detail}"),
             None => detail,
         };
+    }
+
+    if let Some(msg) = match code {
+        "40001" => Some("campo obrigatório não informado. Verifique se todos os campos obrigatórios foram preenchidos"),
+        "40002" => Some("formato inválido. Verifique o formato dos dados enviados"),
+        "42001" => Some("conta já existe no PagBank. Use a API Connect (OAuth2) para solicitar permissão de acesso"),
+        "42002" => Some("criação de conta iniciada por outro canal. O usuário precisa acessar o e-mail para finalizar"),
+        _ => None,
+    } {
+        return msg.to_string();
     }
 
     match *status {
@@ -255,6 +265,40 @@ mod tests {
         };
         let msg = translate(&err);
         assert!(msg.contains("token inválido"));
+    }
+
+    #[test]
+    fn translate_account_code_40001() {
+        let err = PagBankError::Api {
+            status: 400,
+            code: "40001".to_string(),
+            message: "required".to_string(),
+        };
+        let msg = translate(&err);
+        assert!(msg.contains("campo obrigatório"));
+    }
+
+    #[test]
+    fn translate_account_code_42001() {
+        let err = PagBankError::Api {
+            status: 400,
+            code: "42001".to_string(),
+            message: "account exists".to_string(),
+        };
+        let msg = translate(&err);
+        assert!(msg.contains("já existe"));
+        assert!(msg.contains("Connect"));
+    }
+
+    #[test]
+    fn translate_account_code_42002() {
+        let err = PagBankError::Api {
+            status: 400,
+            code: "42002".to_string(),
+            message: "another channel".to_string(),
+        };
+        let msg = translate(&err);
+        assert!(msg.contains("e-mail"));
     }
 
     #[test]
