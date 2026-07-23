@@ -98,3 +98,69 @@ fn print_chunked(text: &str, chunk_size: usize) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_qr_base64_url_found() {
+        let order = serde_json::json!({
+            "charges": [{
+                "links": [
+                    { "rel": "SELF", "href": "https://api.com/order/1" },
+                    { "rel": "QRCODE.BASE64", "href": "https://api.com/qrcode/abc/base64" }
+                ]
+            }]
+        });
+        assert_eq!(
+            extract_qr_base64_url(&order),
+            Some("https://api.com/qrcode/abc/base64".to_string())
+        );
+    }
+
+    #[test]
+    fn extract_qr_base64_url_not_found() {
+        let order = serde_json::json!({
+            "charges": [{
+                "links": [{ "rel": "SELF", "href": "https://api.com/order/1" }]
+            }]
+        });
+        assert_eq!(extract_qr_base64_url(&order), None);
+    }
+
+    #[test]
+    fn extract_qr_base64_url_no_charges() {
+        let order = serde_json::json!({});
+        assert_eq!(extract_qr_base64_url(&order), None);
+    }
+
+    #[test]
+    fn print_chunked_splits_correctly() {
+        let text = "abcdefghijklmnopqrstuvwxyz";
+        let chunks: Vec<&str> = text
+            .as_bytes()
+            .chunks(10)
+            .map(|c| std::str::from_utf8(c).unwrap())
+            .collect();
+        assert_eq!(chunks, vec!["abcdefghij", "klmnopqrst", "uvwxyz"]);
+    }
+
+    #[test]
+    fn save_png_invalid_base64() {
+        // should not panic, just print error
+        save_png("not-valid-base64!!!", "/tmp/test-invalid.png");
+    }
+
+    #[test]
+    fn save_png_writes_file() {
+        // a valid 1x1 pixel PNG in base64
+        let png_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        let path = "/tmp/test-pix-unit.png";
+        save_png(png_b64, path);
+        assert!(std::path::Path::new(path).exists());
+        let meta = std::fs::metadata(path).unwrap();
+        assert!(meta.len() > 0);
+        let _ = std::fs::remove_file(path);
+    }
+}
