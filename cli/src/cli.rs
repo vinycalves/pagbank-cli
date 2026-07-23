@@ -268,6 +268,10 @@ pub enum OrdersAction {
         notification_url: Option<String>,
         #[arg(long)]
         qr_amount: Option<i64>,
+        #[arg(long)]
+        pix: bool,
+        #[arg(long, num_args = 0..=1)]
+        pix_save: Option<String>,
     },
     #[command(about = "Consultar pedido")]
     Get { id: String },

@@ -3,6 +3,7 @@ mod commands;
 mod config;
 mod errors;
 mod output;
+mod pix;
 
 use clap::Parser;
 

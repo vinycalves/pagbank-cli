@@ -44,6 +44,8 @@ pub async fn run(
             installments,
             notification_url,
             qr_amount,
+            pix,
+            pix_save,
         } => {
             if let Err(msg) = crate::errors::validate_order_create(&method, qr_amount) {
                 anyhow::bail!(msg);
@@ -128,6 +130,7 @@ pub async fn run(
                     output::print_object_table("Pedido Criado", &val)
                 }
             }
+            crate::pix::handle_pix_order(&val, pix, pix_save.as_deref(), output_fmt).await;
             Ok(())
         }
         OrdersAction::Get { id } => {
