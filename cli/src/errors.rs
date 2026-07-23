@@ -125,11 +125,7 @@ fn translate_description(desc: &str) -> String {
     if description.contains("No known parameter was given")
         || description.contains("Invalid search parameters")
     {
-        let example = if param.is_empty() {
-            "Exemplo: pb orders list --status PAID --page 1".to_string()
-        } else {
-            format!("Exemplo: pb orders list --status PAID --page 1")
-        };
+        let example = "Exemplo: pb orders list --status PAID --page 1".to_string();
         let base = if param.is_empty() {
             "nenhum parâmetro de busca informado".to_string()
         } else {
