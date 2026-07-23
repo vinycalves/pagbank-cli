@@ -31,12 +31,20 @@ pub async fn run(
             name,
             email,
             tax_id,
+            r#type,
+            tos_ip,
         } => {
+            use chrono::Utc;
             let body = serde_json::json!({
                 "reference_id": reference_id,
                 "name": name,
                 "email": email,
                 "tax_id": tax_id,
+                "type": r#type,
+                "tos_acceptance": {
+                    "ip": tos_ip,
+                    "accepted_at": Utc::now().to_rfc3339(),
+                },
             });
             let result = pagbank_sdk::endpoints::accounts::create(&client, &body).await?;
             let val = serde_json::to_value(result)?;

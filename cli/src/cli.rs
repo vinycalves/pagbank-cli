@@ -238,6 +238,10 @@ pub enum AccountsAction {
         email: String,
         #[arg(long)]
         tax_id: String,
+        #[arg(long, default_value = "SELLER")]
+        r#type: String,
+        #[arg(long)]
+        tos_ip: String,
     },
     #[command(about = "Consultar conta")]
     Get { id: String },
