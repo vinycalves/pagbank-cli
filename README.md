@@ -72,6 +72,10 @@ pagbank-cli/
 └── dist/        # pacotes AUR, Homebrew, etc.
 ```
 
+## Documentação
+
+- [`docs/api-pagbank.md`](docs/api-pagbank.md) — mapeamento completo da API PagBank: fluxos, relações entre endpoints, e mapeamento CLI → API
+
 ## Licença
 
 MIT
