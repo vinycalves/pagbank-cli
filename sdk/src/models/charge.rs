@@ -34,6 +34,8 @@ pub struct Charge {
     pub payment_instructions: Option<PaymentInstructions>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub raw_data: Option<RawData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dwo: Option<Dwo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,6 +105,8 @@ pub struct Card {
     pub last_digits: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub holder: Option<CardHolder>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wallet: Option<CardWallet>,
 }
 
 fn de_string_to_i32_opt<'de, D>(deserializer: D) -> Result<Option<i32>, D::Error>
@@ -132,6 +136,14 @@ pub struct CardHolder {
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tax_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CardWallet {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -237,6 +249,48 @@ pub struct RawData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Dwo {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mcc: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sub_merchant: Option<DwoSubMerchant>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub receiver: Option<DwoReceiver>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cash_in: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DwoSubMerchant {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub address: Option<Address>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub phones: Option<Vec<Phone>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DwoReceiver {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub account_number: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub account_number_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChargeRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reference_id: Option<String>,
@@ -245,6 +299,8 @@ pub struct ChargeRequest {
     pub amount: ChargeAmount,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_method: Option<PaymentMethod>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dwo: Option<Dwo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -264,6 +264,16 @@ pub async fn run(
             }
             Ok(())
         }
+        OrdersAction::ThreeDsSession => {
+            let result = pagbank_sdk::endpoints::charges::create_3ds_session(&client).await?;
+            match output_fmt {
+                crate::cli::OutputFormat::Json => output::print_json(&result),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Sessão 3DS", &result)
+                }
+            }
+            Ok(())
+        }
         OrdersAction::CardStore {
             number,
             exp_month,

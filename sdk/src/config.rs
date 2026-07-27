@@ -33,6 +33,7 @@ pub enum Service {
     Main,
     Recurring,
     Secure,
+    Sdk,
 }
 
 impl Service {
@@ -48,6 +49,8 @@ impl Service {
             }
             (Service::Secure, Environment::Sandbox) => "https://secure.sandbox.api.pagseguro.com",
             (Service::Secure, Environment::Production) => "https://secure.api.pagseguro.com",
+            (Service::Sdk, Environment::Sandbox) => "https://sandbox.sdk.pagseguro.com",
+            (Service::Sdk, Environment::Production) => "https://sdk.pagseguro.com",
         }
     }
 }
@@ -131,6 +134,10 @@ mod tests {
             Service::Secure.base_url(&Environment::Sandbox),
             "https://secure.sandbox.api.pagseguro.com"
         );
+        assert_eq!(
+            Service::Sdk.base_url(&Environment::Sandbox),
+            "https://sandbox.sdk.pagseguro.com"
+        );
     }
 
     #[test]
@@ -146,6 +153,10 @@ mod tests {
         assert_eq!(
             Service::Secure.base_url(&Environment::Production),
             "https://secure.api.pagseguro.com"
+        );
+        assert_eq!(
+            Service::Sdk.base_url(&Environment::Production),
+            "https://sdk.pagseguro.com"
         );
     }
 

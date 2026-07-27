@@ -21,6 +21,31 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-07-27
+
+### Added
+- `Service::Sdk` para endpoints do SDK (checkout-sdk / 3DS)
+- Modelos: `DeepLink`, `CreateDeepLink`, `CreateQrCode.arrangements` (Pagar com PagBank QR Code)
+- Modelos: `Dwo`, `DwoSubMerchant`, `DwoReceiver` (SDWO - carteiras digitais escalonadas)
+- Modelo: `CardWallet` (Apple Pay / Google Pay)
+- Modelos: `SellerRefund`, `SellerRefundPayment` (estornos do vendedor)
+- Endpoint: `GET /refunds` — listar estornos do vendedor (recorrência)
+- `parse_list` agora suporta chaves `payments` e `refunds`
+
+### Fixed
+- **3DS Session**: endpoint corrigido de `POST /authentication-sessions` → `POST /checkout-sdk/sessions` via `Service::Sdk`
+- **Retentativa manual**: endpoint corrigido de `PUT /retries/{id}/retry` → `PUT /subscriptions/{subsID}/retry`
+- **Chave de criptografia**: caminho corrigido de `/encryption-keys` (plural) → `/encryption-key` (singular)
+
+### CLI - Novos comandos
+- `pb connect authorize-sms` — solicitar autorização Connect via SMS
+- `pb orders 3ds-session` — criar sessão de autenticação 3DS
+- `pb subscriptions delete-coupons <id>` — remover cupons de uma assinatura
+- `pb invoices list-payments` — listar pagamentos com filtros (status, data, método)
+- `pb invoices list-seller-refunds` — listar estornos do vendedor
+- `pb preferences get|update|encryption-key-get|encryption-key-create` — preferências
+- `pb retries get|update|manual-retry` — retentativas de cobrança
+
 ## [0.1.5] - 2026-07-22
 
 ### Added

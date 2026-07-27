@@ -163,5 +163,10 @@ pub async fn run(
             }
             Ok(())
         }
+        SubscriptionsAction::DeleteCoupons { id } => {
+            pagbank_sdk::endpoints::subscriptions::delete_coupons(&client, &id).await?;
+            output::print_success("Cupons removidos da assinatura");
+            Ok(())
+        }
     }
 }

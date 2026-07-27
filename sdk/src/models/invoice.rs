@@ -91,3 +91,29 @@ pub struct CreateRefundRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub amount: Option<i64>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SellerRefund {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payment: Option<SellerRefundPayment>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount: Option<InvoiceAmount>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub links: Option<Vec<super::common::Link>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SellerRefundPayment {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount: Option<InvoiceAmount>,
+}

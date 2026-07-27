@@ -26,15 +26,15 @@ pub async fn update(
     crate::models::parse_response(resp).await
 }
 
-pub async fn retry_now(client: &PagBankClient, id: &str) -> Result<Retry, PagBankError> {
+pub async fn manual_retry(client: &PagBankClient, subs_id: &str) -> Result<(), PagBankError> {
     let body = serde_json::json!({});
     let resp = client
         .put(
             Service::Recurring,
-            &format!("/retries/{id}/retry"),
+            &format!("/subscriptions/{subs_id}/retry"),
             &body,
             &RequestOptions::default(),
         )
         .await?;
-    crate::models::parse_response(resp).await
+    crate::models::parse_void(resp).await
 }
