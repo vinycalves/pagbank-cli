@@ -39,9 +39,7 @@ pub async fn cancel(client: &PagBankClient, charge_id: &str) -> Result<Charge, P
     crate::models::parse_response(resp).await
 }
 
-pub async fn create_3ds_session(
-    client: &PagBankClient,
-) -> Result<serde_json::Value, PagBankError> {
+pub async fn create_3ds_session(client: &PagBankClient) -> Result<serde_json::Value, PagBankError> {
     let body = serde_json::json!({});
     let resp = client
         .post(

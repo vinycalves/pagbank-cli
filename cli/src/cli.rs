@@ -125,7 +125,9 @@ pub enum Commands {
         #[command(subcommand)]
         action: WebhooksAction,
     },
-    #[command(about = "Gerenciar preferências de notificação e chaves de criptografia (recorrência)")]
+    #[command(
+        about = "Gerenciar preferências de notificação e chaves de criptografia (recorrência)"
+    )]
     Preferences {
         #[command(subcommand)]
         action: PreferencesAction,
@@ -729,7 +731,10 @@ pub enum InvoicesAction {
     },
     #[command(about = "Listar todos os pagamentos (recorrência) com filtros")]
     ListPayments {
-        #[arg(long, help = "Filtrar por status: APPROVED, DENIED, IN_ANALYSIS, PENDING, REFUNDED, UNPAID")]
+        #[arg(
+            long,
+            help = "Filtrar por status: APPROVED, DENIED, IN_ANALYSIS, PENDING, REFUNDED, UNPAID"
+        )]
         status: Option<String>,
         #[arg(long, default_value = "0", help = "Número da página (offset)")]
         offset: i32,

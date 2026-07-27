@@ -31,16 +31,13 @@ pub async fn run(
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
-                crate::cli::OutputFormat::Table => {
-                    output::print_object_table("Retentativa", &val)
-                }
+                crate::cli::OutputFormat::Table => output::print_object_table("Retentativa", &val),
             }
             Ok(())
         }
         RetriesAction::Update { id, body } => {
             let body_val: serde_json::Value = serde_json::from_str(&body)?;
-            let result =
-                pagbank_sdk::endpoints::retries::update(&client, &id, &body_val).await?;
+            let result = pagbank_sdk::endpoints::retries::update(&client, &id, &body_val).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),

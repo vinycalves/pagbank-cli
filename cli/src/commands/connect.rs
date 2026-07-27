@@ -132,8 +132,7 @@ pub async fn run(
                 "bank_branch": bank_branch,
                 "account_number": account_number,
             });
-            let result =
-                pagbank_sdk::endpoints::connect::create_sms_auth(&client, &body).await?;
+            let result = pagbank_sdk::endpoints::connect::create_sms_auth(&client, &body).await?;
             let val = serde_json::to_value(result)?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&val),
