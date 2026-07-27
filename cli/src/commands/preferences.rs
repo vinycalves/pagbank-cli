@@ -49,8 +49,7 @@ pub async fn run(
             Ok(())
         }
         PreferencesAction::EncryptionKeyGet => {
-            let result =
-                pagbank_sdk::endpoints::preferences::get_encryption_key(&client).await?;
+            let result = pagbank_sdk::endpoints::preferences::get_encryption_key(&client).await?;
             match output_fmt {
                 crate::cli::OutputFormat::Json => output::print_json(&result),
                 crate::cli::OutputFormat::Table => {

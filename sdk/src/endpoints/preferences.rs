@@ -24,9 +24,7 @@ pub async fn update_preferences(
     crate::models::parse_response(resp).await
 }
 
-pub async fn get_encryption_key(
-    client: &PagBankClient,
-) -> Result<serde_json::Value, PagBankError> {
+pub async fn get_encryption_key(client: &PagBankClient) -> Result<serde_json::Value, PagBankError> {
     let resp = client.get(Service::Recurring, "/encryption-key").await?;
     crate::models::parse_response(resp).await
 }
