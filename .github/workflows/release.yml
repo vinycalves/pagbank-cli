@@ -72,7 +72,7 @@ jobs:
             echo "CARGO_REGISTRY_TOKEN não definido — pulando publish"
           else
             # --allow-dirty porque cli/Cargo.toml é modificado pelo sed acima
-            cargo publish -p pb --allow-dirty --token "$TOKEN"
+            cargo publish -p pagbank-cli --allow-dirty --token "$TOKEN"
           fi
 
   build:

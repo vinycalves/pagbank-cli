@@ -1,5 +1,5 @@
 [package]
-name = "pb"
+name = "pagbank-cli"
 description = "CLI para as APIs do PagBank"
 version.workspace = true
 edition.workspace = true
