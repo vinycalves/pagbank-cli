@@ -71,7 +71,8 @@ jobs:
           if [ -z "$TOKEN" ]; then
             echo "CARGO_REGISTRY_TOKEN não definido — pulando publish"
           else
-            cargo publish -p pb --token "$TOKEN"
+            # --allow-dirty porque cli/Cargo.toml é modificado pelo sed acima
+            cargo publish -p pb --allow-dirty --token "$TOKEN"
           fi
 
   build:
