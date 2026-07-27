@@ -42,7 +42,7 @@ pub async fn parse_list<T: serde::de::DeserializeOwned>(
     resp: reqwest::Response,
 ) -> Result<Vec<T>, PagBankError> {
     let json: serde_json::Value = resp.json().await?;
-    for key in &["data", "orders", "items"] {
+    for key in &["data", "orders", "items", "payments", "refunds"] {
         if let Some(arr) = json.get(*key).and_then(|v| v.as_array()) {
             let items: Vec<T> = arr
                 .iter()

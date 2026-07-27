@@ -58,6 +58,12 @@ async fn main() -> anyhow::Result<()> {
         cli::Commands::Clubpag { action } => {
             commands::clubpag::run(action, env_override, output_fmt).await
         }
+        cli::Commands::Preferences { action } => {
+            commands::preferences::run(action, env_override, output_fmt).await
+        }
+        cli::Commands::Retries { action } => {
+            commands::retries::run(action, env_override, output_fmt).await
+        }
         cli::Commands::Webhooks { action } => match action {
             cli::WebhooksAction::Verify {
                 token,

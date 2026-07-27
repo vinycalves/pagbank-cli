@@ -19,6 +19,8 @@ pub struct Order {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub qr_codes: Option<Vec<QrCode>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub deep_links: Option<Vec<DeepLink>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub charges: Option<Vec<super::charge::Charge>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub notification_urls: Option<Vec<String>>,
@@ -81,6 +83,8 @@ pub struct CreateOrderRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub qr_codes: Option<Vec<CreateQrCode>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub deep_links: Option<Vec<CreateDeepLink>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub notification_urls: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub charges: Option<Vec<super::charge::ChargeRequest>>,
@@ -96,6 +100,16 @@ pub struct CreateQrCode {
     pub amount: Option<Amount>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expiration_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub arrangements: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateDeepLink {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount: Option<Amount>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redirect_url: Option<String>,
 }
 
 #[cfg(test)]
@@ -140,6 +154,7 @@ mod tests {
             items: None,
             shipping: None,
             qr_codes: None,
+            deep_links: None,
             charges: None,
             notification_urls: None,
             splits: None,
@@ -172,6 +187,7 @@ mod tests {
             }]),
             shipping: None,
             qr_codes: None,
+            deep_links: None,
             notification_urls: None,
             charges: None,
             splits: None,

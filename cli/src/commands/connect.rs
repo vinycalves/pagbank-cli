@@ -124,5 +124,24 @@ pub async fn run(
             output::print_success("Token revogado com sucesso");
             Ok(())
         }
+        ConnectAction::AuthorizeSms {
+            bank_branch,
+            account_number,
+        } => {
+            let body = serde_json::json!({
+                "bank_branch": bank_branch,
+                "account_number": account_number,
+            });
+            let result =
+                pagbank_sdk::endpoints::connect::create_sms_auth(&client, &body).await?;
+            let val = serde_json::to_value(result)?;
+            match output_fmt {
+                crate::cli::OutputFormat::Json => output::print_json(&val),
+                crate::cli::OutputFormat::Table => {
+                    output::print_object_table("Autorização SMS", &val)
+                }
+            }
+            Ok(())
+        }
     }
 }

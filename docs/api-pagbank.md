@@ -5,7 +5,7 @@ endpoints e como o CLI `pb` os implementa.
 
 ## Arquitetura Geral
 
-A API PagBank segue o padrão RESTful, com respostas em JSON. Três domínios
+A API PagBank segue o padrão RESTful, com respostas em JSON. Quatro domínios
 principais coexistem:
 
 ```
@@ -13,21 +13,36 @@ PagBank API
 ├── Pagamento (pagamentos avulsos)
 │   ├── Account        ← conta de recebedor (seller)
 │   ├── Order + Charge ← pedido + cobrança
+│   │   ├── QR Code (PIX)
+│   │   ├── Deep Link (Pagar com PagBank via app)
+│   │   ├── SDWO (carteiras digitais escalonadas)
+│   │   ├── Apple Pay / Google Pay (wallets)
+│   │   └── Divisão de pagamento (split)
 │   ├── Checkout       ← página de pagamento simplificada
 │   ├── Public Key     ← criptografia de cartão
 │   ├── Connect        ← OAuth2 (agir em nome de outro usuário)
-│   └── Certificate    ← mTLS (segurança extra)
+│   ├── Certificate    ← mTLS (segurança extra)
+│   └── 3DS Session    ← autenticação 3D Secure
 │
 ├── Recorrência (assinaturas)
 │   ├── Plan           ← modelo de cobrança
 │   ├── Subscriber     ← cliente da recorrência
 │   ├── Subscription   ← vínculo plano + assinante
+│   │   ├── Coupons    ← cupons de desconto na assinatura
+│   │   └── Delete     ← remover cupons da assinatura
 │   ├── Invoice        ← fatura gerada
-│   ├── Coupon         ← desconto
-│   └── Retry          ← retentativa de cobrança
+│   ├── Payment        ← pagamento da fatura
+│   ├── Refund         ← estorno
+│   ├── Coupon         ← desconto (avulso)
+│   ├── Retry          ← retentativa de cobrança
+│   ├── Preferences    ← notificações e chave de criptografia
+│   └── Encryption Key ← chave pública para criptografia
 │
-└── ClubPag (fidelidade)
-    └── ClubPag        ← cashback, benefícios, cupons
+├── ClubPag (fidelidade)
+│   └── ClubPag        ← cashback, benefícios, cupons
+│
+└── SDK (serviços auxiliares)
+    └── Checkout SDK   ← sessão 3DS, simulação de pagamento
 ```
 
 ---
@@ -225,21 +240,24 @@ Verificação de autenticidade
 | `pb connect app-create` | `POST /oauth2/application` | Criar app Connect |
 | `pb connect app-get <id>` | `GET /oauth2/application/{id}` | Consultar app |
 | `pb connect authorize` | `GET /oauth2/authorize` | Gerar URL de autorização |
+| `pb connect authorize-sms` | `POST /oauth2/authorize/sms` | Autorizar via SMS |
 | `pb connect token` | `POST /oauth2/token` | Obter access token |
 | `pb connect token-refresh` | `POST /oauth2/token/refresh` | Renovar token |
 | `pb connect token-revoke` | `POST /oauth2/token/revoke` | Revogar token |
 | `pb certs create` | `POST /certificates` | Criar certificado mTLS |
 | `pb accounts create` | `POST /accounts` | Criar conta (seller) |
 | `pb accounts get <id>` | `GET /accounts/{id}` | Consultar conta |
-| `pb orders create` | `POST /orders` | Criar pedido |
+| `pb orders create` | `POST /orders` | Criar pedido (pix, cartão, etc.) |
 | `pb orders get <id>` | `GET /orders/{id}` | Consultar pedido |
-| `pb orders list` | `GET /orders` | Listar pedidos |
+| `pb orders list` | `GET /orders?charge_id=` | Listar pedidos |
 | `pb orders pay <id>` | `POST /orders/{id}/pay` | Pagar pedido |
 | `pb orders split <id>` | `GET /orders/{id}/splits` | Consultar split |
+| `pb orders split-release <id>` | `POST /orders/{id}/splits/release` | Liberar custódia |
 | `pb orders capture <id>` | `POST /charges/{id}/capture` | Capturar |
 | `pb orders cancel <id>` | `POST /charges/{id}/cancel` | Cancelar |
 | `pb orders fees <id>` | `GET /charges/{id}/costs` | Consultar taxas |
 | `pb orders card-store` | `POST /cards` | Armazenar cartão |
+| `pb orders 3ds-session` | `POST /checkout-sdk/sessions` | Criar sessão 3DS |
 | `pb checkouts create` | `POST /checkouts` | Criar checkout |
 | `pb checkouts get <id>` | `GET /checkouts/{id}` | Consultar checkout |
 | `pb checkouts activate` | `POST /checkouts/{id}/activate` | Ativar checkout |
@@ -263,6 +281,7 @@ Verificação de autenticidade
 | `pb subscriptions suspend <id>` | `PUT /subscriptions/{id}/suspend` | Suspender |
 | `pb subscriptions activate <id>` | `PUT /subscriptions/{id}/activate` | Ativar |
 | `pb subscriptions invoices <id>` | `GET /subscriptions/{id}/invoices` | Listar faturas |
+| `pb subscriptions delete-coupons <id>` | `DELETE /subscriptions/{id}/coupons` | Remover cupons |
 | `pb coupons create` | `POST /coupons` | Criar cupom |
 | `pb coupons get <id>` | `GET /coupons/{id}` | Consultar cupom |
 | `pb coupons list` | `GET /coupons` | Listar cupons |
@@ -273,6 +292,15 @@ Verificação de autenticidade
 | `pb invoices refund <id>` | `POST /payments/{id}/refund` | Criar estorno |
 | `pb invoices list-refunds <id>` | `GET /payments/{id}/refunds` | Listar estornos |
 | `pb invoices get-payment <id>` | `GET /payments/{id}` | Consultar pagamento |
+| `pb invoices list-payments` | `GET /payments` | Listar pagamentos c/ filtros |
+| `pb invoices list-seller-refunds` | `GET /refunds` | Listar estornos do vendedor |
+| `pb preferences get` | `GET /notification-preferences` | Preferências de notificação |
+| `pb preferences update <json>` | `PUT /notification-preferences` | Alterar preferências |
+| `pb preferences encryption-key-get` | `GET /encryption-key` | Chave de criptografia |
+| `pb preferences encryption-key-create <json>` | `PUT /encryption-key` | Criar chave criptografia |
+| `pb retries get <id>` | `GET /retries/{id}` | Consultar retentativa |
+| `pb retries update <id>` | `PUT /retries/{id}` | Alterar retentativa |
+| `pb retries manual-retry <subs_id>` | `PUT /subscriptions/{id}/retry` | Retentativa manual |
 | `pb clubpag settings` | `GET /clubpag/settings` | Configurações |
 | `pb clubpag update-settings` | `PUT /clubpag/settings` | Alterar config |
 | `pb clubpag purchase` | `POST /clubpag/purchase` | Identificar compra |

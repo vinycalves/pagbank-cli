@@ -41,13 +41,13 @@ pub async fn cancel(client: &PagBankClient, charge_id: &str) -> Result<Charge, P
 
 pub async fn create_3ds_session(
     client: &PagBankClient,
-    body: &serde_json::Value,
 ) -> Result<serde_json::Value, PagBankError> {
+    let body = serde_json::json!({});
     let resp = client
         .post(
-            Service::Main,
-            "/authentication-sessions",
-            body,
+            Service::Sdk,
+            "/checkout-sdk/sessions",
+            &body,
             &RequestOptions::default(),
         )
         .await?;

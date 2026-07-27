@@ -125,6 +125,16 @@ pub enum Commands {
         #[command(subcommand)]
         action: WebhooksAction,
     },
+    #[command(about = "Gerenciar preferências de notificação e chaves de criptografia (recorrência)")]
+    Preferences {
+        #[command(subcommand)]
+        action: PreferencesAction,
+    },
+    #[command(about = "Gerenciar retentativas de cobrança (recorrência)")]
+    Retries {
+        #[command(subcommand)]
+        action: RetriesAction,
+    },
     #[command(about = "Gerar script de autocomplete para o shell")]
     Completion { shell: Shell },
 }
@@ -243,6 +253,13 @@ pub enum ConnectAction {
     TokenRevoke {
         #[arg(long, help = "Access token a ser revogado")]
         token: String,
+    },
+    #[command(about = "Solicitar autorização via SMS para o Connect")]
+    AuthorizeSms {
+        #[arg(long, help = "Agência bancária do cliente PagBank")]
+        bank_branch: String,
+        #[arg(long, help = "Número da conta bancária do cliente PagBank")]
+        account_number: String,
     },
 }
 
@@ -406,6 +423,8 @@ pub enum OrdersAction {
         #[arg(help = "ID da cobrança (charge) para consultar taxas")]
         charge_id: String,
     },
+    #[command(about = "Criar sessão de autenticação 3DS")]
+    ThreeDsSession,
     #[command(about = "Validar e armazenar cartão para uso futuro")]
     CardStore {
         #[arg(long, help = "Número do cartão")]
@@ -631,6 +650,11 @@ pub enum SubscriptionsAction {
         #[arg(help = "ID da assinatura para listar faturas")]
         id: String,
     },
+    #[command(about = "Remover cupons de desconto de uma assinatura")]
+    DeleteCoupons {
+        #[arg(help = "ID da assinatura para remover cupons")]
+        id: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -703,6 +727,28 @@ pub enum InvoicesAction {
         #[arg(help = "ID do pagamento recorrente")]
         payment_id: String,
     },
+    #[command(about = "Listar todos os pagamentos (recorrência) com filtros")]
+    ListPayments {
+        #[arg(long, help = "Filtrar por status: APPROVED, DENIED, IN_ANALYSIS, PENDING, REFUNDED, UNPAID")]
+        status: Option<String>,
+        #[arg(long, default_value = "0", help = "Número da página (offset)")]
+        offset: i32,
+        #[arg(long, default_value = "100", help = "Itens por página")]
+        limit: i32,
+        #[arg(long, help = "Data de início (YYYY-MM-DD)")]
+        created_at_start: Option<String>,
+        #[arg(long, help = "Data de fim (YYYY-MM-DD)")]
+        created_at_end: Option<String>,
+        #[arg(long, help = "Forma de pagamento: BOLETO, CREDIT_CARD")]
+        payment_method: Option<String>,
+    },
+    #[command(about = "Listar estornos do vendedor (recorrência)")]
+    ListSellerRefunds {
+        #[arg(long, default_value = "0", help = "Número da página (offset)")]
+        offset: i32,
+        #[arg(long, default_value = "100", help = "Itens por página")]
+        limit: i32,
+    },
 }
 
 #[derive(Subcommand)]
@@ -734,6 +780,45 @@ pub enum ClubPagAction {
     Cashback,
     #[command(about = "Listar cupons ClubPag")]
     Coupons,
+}
+
+#[derive(Subcommand)]
+pub enum PreferencesAction {
+    #[command(about = "Consultar preferências de notificação")]
+    Get,
+    #[command(about = "Atualizar preferências de notificação (JSON)")]
+    Update {
+        #[arg(help = "JSON com as configurações de notificação")]
+        body: String,
+    },
+    #[command(about = "Consultar chave de criptografia (recorrência)")]
+    EncryptionKeyGet,
+    #[command(about = "Criar chave de criptografia (recorrência)")]
+    EncryptionKeyCreate {
+        #[arg(help = "JSON com os dados da chave de criptografia")]
+        body: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum RetriesAction {
+    #[command(about = "Consultar configuração de retentativa pelo ID")]
+    Get {
+        #[arg(help = "ID da retentativa")]
+        id: String,
+    },
+    #[command(about = "Alterar configuração de retentativa")]
+    Update {
+        #[arg(help = "ID da retentativa")]
+        id: String,
+        #[arg(help = "JSON com as novas configurações")]
+        body: String,
+    },
+    #[command(about = "Disparar retentativa manual de cobrança de assinatura")]
+    ManualRetry {
+        #[arg(help = "ID da assinatura (SUBS_XXXX)")]
+        subs_id: String,
+    },
 }
 
 #[derive(Subcommand)]

@@ -62,6 +62,24 @@ pub async fn list_refunds(
     crate::models::parse_list(resp).await
 }
 
+pub async fn list_seller_refunds(
+    client: &PagBankClient,
+    params: &[(String, String)],
+) -> Result<Vec<SellerRefund>, PagBankError> {
+    let query: String = params
+        .iter()
+        .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
+        .collect::<Vec<_>>()
+        .join("&");
+    let path = if query.is_empty() {
+        "/refunds".to_string()
+    } else {
+        format!("/refunds?{query}")
+    };
+    let resp = client.get(Service::Recurring, &path).await?;
+    crate::models::parse_list(resp).await
+}
+
 pub async fn list_all_payments(
     client: &PagBankClient,
     params: &[(String, String)],

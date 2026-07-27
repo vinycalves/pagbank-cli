@@ -114,5 +114,82 @@ pub async fn run(
             }
             Ok(())
         }
+        InvoicesAction::ListPayments {
+            status,
+            offset,
+            limit,
+            created_at_start,
+            created_at_end,
+            payment_method,
+        } => {
+            let mut params: Vec<(String, String)> = vec![
+                ("offset".to_string(), offset.to_string()),
+                ("limit".to_string(), limit.to_string()),
+            ];
+            if let Some(s) = status {
+                params.push(("status".to_string(), s));
+            }
+            if let Some(s) = created_at_start {
+                params.push(("created_at_start".to_string(), s));
+            }
+            if let Some(s) = created_at_end {
+                params.push(("created_at_end".to_string(), s));
+            }
+            if let Some(s) = payment_method {
+                params.push(("payment_method_type".to_string(), s));
+            }
+            let result =
+                pagbank_sdk::endpoints::invoices::list_all_payments(&client, &params).await?;
+            let val = serde_json::to_value(result)?;
+            match output_fmt {
+                crate::cli::OutputFormat::Json => output::print_json(&val),
+                crate::cli::OutputFormat::Table => {
+                    if let Some(arr) = val.as_array() {
+                        let rows: Vec<Vec<String>> = arr
+                            .iter()
+                            .map(|p| {
+                                vec![
+                                    p["id"].as_str().unwrap_or("").to_string(),
+                                    p["status"].as_str().unwrap_or("").to_string(),
+                                    p["amount"]["total"].to_string(),
+                                    p["created_at"].as_str().unwrap_or("").to_string(),
+                                ]
+                            })
+                            .collect();
+                        output::print_table(&["ID", "Status", "Total", "Criado em"], rows);
+                    }
+                }
+            }
+            Ok(())
+        }
+        InvoicesAction::ListSellerRefunds { offset, limit } => {
+            let params: Vec<(String, String)> = vec![
+                ("offset".to_string(), offset.to_string()),
+                ("limit".to_string(), limit.to_string()),
+            ];
+            let result =
+                pagbank_sdk::endpoints::invoices::list_seller_refunds(&client, &params).await?;
+            let val = serde_json::to_value(result)?;
+            match output_fmt {
+                crate::cli::OutputFormat::Json => output::print_json(&val),
+                crate::cli::OutputFormat::Table => {
+                    if let Some(arr) = val.as_array() {
+                        let rows: Vec<Vec<String>> = arr
+                            .iter()
+                            .map(|r| {
+                                vec![
+                                    r["id"].as_str().unwrap_or("").to_string(),
+                                    r["status"].as_str().unwrap_or("").to_string(),
+                                    r["type"].as_str().unwrap_or("").to_string(),
+                                    r["created_at"].as_str().unwrap_or("").to_string(),
+                                ]
+                            })
+                            .collect();
+                        output::print_table(&["ID", "Status", "Tipo", "Criado em"], rows);
+                    }
+                }
+            }
+            Ok(())
+        }
     }
 }

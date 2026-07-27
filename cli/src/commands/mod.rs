@@ -12,3 +12,5 @@ pub mod orders;
 pub mod plans;
 pub mod subscribers;
 pub mod subscriptions;
+pub mod preferences;
+pub mod retries;

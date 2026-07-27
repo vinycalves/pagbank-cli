@@ -24,21 +24,21 @@ pub async fn update_preferences(
     crate::models::parse_response(resp).await
 }
 
-pub async fn get_encryption_keys(
+pub async fn get_encryption_key(
     client: &PagBankClient,
 ) -> Result<serde_json::Value, PagBankError> {
-    let resp = client.get(Service::Recurring, "/encryption-keys").await?;
+    let resp = client.get(Service::Recurring, "/encryption-key").await?;
     crate::models::parse_response(resp).await
 }
 
-pub async fn update_encryption_keys(
+pub async fn create_encryption_key(
     client: &PagBankClient,
     body: &serde_json::Value,
 ) -> Result<serde_json::Value, PagBankError> {
     let resp = client
         .put(
             Service::Recurring,
-            "/encryption-keys",
+            "/encryption-key",
             body,
             &RequestOptions::default(),
         )
