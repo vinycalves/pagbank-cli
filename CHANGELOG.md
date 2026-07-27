@@ -21,6 +21,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-07-27
+
+### Fixed
+- Release workflow: `--allow-dirty` no cargo publish do pb (sed altera Cargo.toml)
+- Release workflow: bump para 0.1.7 (0.1.6 já publicado no crates.io)
+
 ## [0.1.6] - 2026-07-27
 
 ### Added
