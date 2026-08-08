@@ -88,7 +88,7 @@ async fn main() -> anyhow::Result<()> {
                     .iter()
                     .map(|b| format!("{:02x}", b))
                     .collect::<String>();
-                if computed == signature {
+                if constant_time_eq(&computed, &signature) {
                     output::print_success("Assinatura válida!");
                 } else {
                     output::print_error("Assinatura inválida");
@@ -116,6 +116,19 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn constant_time_eq(a: &str, b: &str) -> bool {
+    let a = a.as_bytes();
+    let b = b.as_bytes();
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff = 0u8;
+    for (x, y) in a.iter().zip(b.iter()) {
+        diff |= x ^ y;
+    }
+    diff == 0
 }
 
 fn generate_completion(shell: cli::Shell) {

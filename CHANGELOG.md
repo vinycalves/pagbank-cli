@@ -21,6 +21,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-08-08
+
+### Security
+- `config.toml` agora é gravado com permissões `0600` (tokens não ficam legíveis por outros usuários)
+- Comparação de assinatura em `webhooks verify` agora é constant-time (mitiga timing attack)
+- `pb config init` usa input mascarado (dialoguer Password) para token e token de recorrência
+
+### Changed
+- Removida dependência não utilizada `secrecy` do SDK
+
 ## [0.1.7] - 2026-07-27
 
 ### Fixed
