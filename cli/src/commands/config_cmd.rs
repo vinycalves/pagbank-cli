@@ -7,7 +7,7 @@ use crate::output;
 pub async fn run(action: ConfigAction) -> Result<()> {
     match action {
         ConfigAction::Init => {
-            let token = dialoguer::Input::<String>::new()
+            let token = dialoguer::Password::new()
                 .with_prompt("Token de autenticação (sandbox)")
                 .interact()?;
             let environment = dialoguer::Select::new()
@@ -22,10 +22,9 @@ pub async fn run(action: ConfigAction) -> Result<()> {
                 "production"
             };
 
-            let recurring_token = dialoguer::Input::<String>::new()
+            let recurring_token = dialoguer::Password::new()
                 .with_prompt("Token de recorrência (vazio para pular)")
-                .allow_empty(true)
-                .default(String::new())
+                .allow_empty_password(true)
                 .interact()?;
 
             let mut config = PbConfig::load()?;

@@ -40,6 +40,18 @@ fn default_environment() -> String {
     "sandbox".to_string()
 }
 
+#[cfg(unix)]
+fn set_restrictive_perms(path: &std::path::Path) -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(path, fs::Permissions::from_mode(0o600))?;
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn set_restrictive_perms(_path: &std::path::Path) -> Result<()> {
+    Ok(())
+}
+
 impl PbConfig {
     pub fn config_dir() -> Result<PathBuf> {
         let config_dir = dirs::config_dir().ok_or_else(|| {
@@ -67,7 +79,13 @@ impl PbConfig {
         fs::create_dir_all(&dir)?;
         let path = Self::config_path()?;
         let content = toml::to_string_pretty(self)?;
-        fs::write(path, content)?;
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&path)?;
+        set_restrictive_perms(&path)?;
+        std::io::Write::write_all(&mut file, content.as_bytes())?;
         Ok(())
     }
 
@@ -189,5 +207,22 @@ mod tests {
     fn test_get_value_unknown_key() {
         let config = PbConfig::default();
         assert!(config.get_value("unknown").is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn save_sets_restrictive_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = std::env::temp_dir().join(format!("pb-config-test-{}", std::process::id()));
+        let path = dir.join("config.toml");
+        fs::create_dir_all(&dir).unwrap();
+
+        fs::write(&path, "test").unwrap();
+        set_restrictive_perms(&path).unwrap();
+        let mode = fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode, 0o600);
+
+        let _ = fs::remove_dir_all(&dir);
     }
 }
