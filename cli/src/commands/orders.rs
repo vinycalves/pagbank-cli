@@ -1,29 +1,14 @@
 use anyhow::Result;
-use pagbank_sdk::{Environment, PagBankClient, PagBankConfig};
 
 use crate::cli::OrdersAction;
-use crate::config::PbConfig;
 use crate::output;
-
-fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagBankClient> {
-    let active = config.get_active_config(env_override);
-    let pagbank_config = PagBankConfig {
-        environment: active.environment.parse().unwrap_or(Environment::Sandbox),
-        token: active.token.clone(),
-        recurring_token: active.recurring_token.clone(),
-        client_id: active.client_id.clone(),
-        client_secret: active.client_secret.clone(),
-    };
-    Ok(PagBankClient::new(pagbank_config))
-}
 
 pub async fn run(
     action: OrdersAction,
     env_override: Option<&str>,
     output_fmt: &crate::cli::OutputFormat,
 ) -> Result<()> {
-    let config = PbConfig::load()?;
-    let client = make_client(&config, env_override)?;
+    let client = crate::client::load_client(env_override)?;
 
     match action {
         OrdersAction::Create {
@@ -47,7 +32,21 @@ pub async fn run(
             pix,
             pix_save,
         } => {
-            if let Err(msg) = crate::errors::validate_order_create(&method, qr_amount) {
+            if let Err(msg) = crate::validators::validate_email(&customer_email) {
+                anyhow::bail!(msg);
+            }
+            if let Err(msg) = crate::validators::validate_tax_id(&customer_tax_id) {
+                anyhow::bail!(msg);
+            }
+            let card_opt = card_number.as_deref().map(|n| crate::validators::CardInfo {
+                number: n,
+                exp_month: card_exp_month,
+                exp_year: card_exp_year,
+                cvv: card_cvv.as_deref(),
+            });
+            if let Err(msg) =
+                crate::errors::validate_order_create(&method, qr_amount, card_opt.as_ref())
+            {
                 anyhow::bail!(msg);
             }
 
@@ -130,7 +129,7 @@ pub async fn run(
                     output::print_object_table("Pedido Criado", &val)
                 }
             }
-            crate::pix::handle_pix_order(&val, pix, pix_save.as_deref(), output_fmt).await;
+            crate::pix::handle_pix_order(&client, &val, pix, pix_save.as_deref(), output_fmt).await;
             Ok(())
         }
         OrdersAction::Get { id } => {
@@ -186,6 +185,16 @@ pub async fn run(
                     if let Some(id) = card_id {
                         payment_method["card"] = serde_json::json!({ "id": id });
                     } else {
+                        if let Err(msg) =
+                            crate::validators::validate_card(&crate::validators::CardInfo {
+                                number: card_number.as_deref().unwrap_or_default(),
+                                exp_month: card_exp_month,
+                                exp_year: card_exp_year,
+                                cvv: card_cvv.as_deref(),
+                            })
+                        {
+                            anyhow::bail!(msg);
+                        }
                         payment_method["card"] = serde_json::json!({
                             "number": card_number.unwrap_or_default(),
                             "exp_month": card_exp_month.unwrap_or(0),

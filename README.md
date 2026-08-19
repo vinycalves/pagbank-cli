@@ -23,6 +23,7 @@ A arquitetura reflete dois públicos diferentes:
 | Contas e Chaves | Cadastro, chaves públicas |
 | Certificados | Criação de certificado digital (mTLS) |
 | Webhooks | Verificação de autenticidade SHA-256 |
+| Diagnóstico | `pb doctor` (configuração + conectividade) e `pb config path/reset` |
 
 ## Keywords
 
@@ -62,6 +63,16 @@ Saída em tabela ou JSON (pipe para `jq`):
 ```bash
 pb orders list --output json | jq '.[] | select(.status == "PAID")'
 ```
+
+Diagnóstico e localização da configuração:
+
+```bash
+pb doctor            # verifica instalação e configuração
+pb doctor --connect  # também testa a conectividade com a API
+pb config path       # mostra o caminho do arquivo de configuração
+```
+
+> Dica: defina `PB_CONFIG_DIR=/caminho/personalizado` para usar outro diretório de configuração.
 
 ## Projeto
 

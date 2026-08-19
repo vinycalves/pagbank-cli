@@ -54,6 +54,11 @@ fn set_restrictive_perms(_path: &std::path::Path) -> Result<()> {
 
 impl PbConfig {
     pub fn config_dir() -> Result<PathBuf> {
+        if let Ok(dir) = std::env::var("PB_CONFIG_DIR") {
+            if !dir.trim().is_empty() {
+                return Ok(PathBuf::from(dir));
+            }
+        }
         let config_dir = dirs::config_dir().ok_or_else(|| {
             anyhow::anyhow!("não foi possível determinar o diretório de configuração")
         })?;
@@ -207,6 +212,65 @@ mod tests {
     fn test_get_value_unknown_key() {
         let config = PbConfig::default();
         assert!(config.get_value("unknown").is_err());
+    }
+
+    #[test]
+    fn config_dir_respects_env_override() {
+        let _guard = env_guard();
+        let dir = std::env::temp_dir().join(format!("pb-env-dir-test-{}", std::process::id()));
+        std::env::set_var("PB_CONFIG_DIR", &dir);
+        assert_eq!(PbConfig::config_dir().unwrap(), dir);
+        assert_eq!(PbConfig::config_path().unwrap(), dir.join("config.toml"));
+        std::env::remove_var("PB_CONFIG_DIR");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn config_roundtrip_via_env_dir() {
+        let _guard = env_guard();
+        let dir = std::env::temp_dir().join(format!("pb-rt-roundtrip-test-{}", std::process::id()));
+        std::env::set_var("PB_CONFIG_DIR", &dir);
+
+        let mut config = PbConfig::default();
+        config.default.token = "token_roundtrip".to_string();
+        config.default.recurring_token = Some("rec".to_string());
+        config.save().unwrap();
+
+        let loaded = PbConfig::load().unwrap();
+        assert_eq!(loaded.default.token, "token_roundtrip");
+        assert_eq!(loaded.default.recurring_token.as_deref(), Some("rec"));
+
+        std::env::remove_var("PB_CONFIG_DIR");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn set_value_updates_and_persists() {
+        let _guard = env_guard();
+        let dir = std::env::temp_dir().join(format!("pb-set-value-test-{}", std::process::id()));
+        std::env::set_var("PB_CONFIG_DIR", &dir);
+
+        let mut config = PbConfig::default();
+        config.set_value("token", "novo_token").unwrap();
+        config.set_value("environment", "production").unwrap();
+
+        let loaded = PbConfig::load().unwrap();
+        assert_eq!(loaded.default.token, "novo_token");
+        assert_eq!(loaded.default.environment, "production");
+
+        std::env::remove_var("PB_CONFIG_DIR");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    fn env_guard() -> std::sync::MutexGuard<'static, ()> {
+        static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+        LOCK.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    #[test]
+    fn set_value_unknown_key_errors() {
+        let mut config = PbConfig::default();
+        assert!(config.set_value("foo", "bar").is_err());
     }
 
     #[cfg(unix)]
