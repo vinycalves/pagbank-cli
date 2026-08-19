@@ -21,6 +21,27 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- Comando `pb config path` exibe o caminho do arquivo de configuração
+- Comando `pb config reset` restaura a configuração padrão
+- Comando `pb doctor` diagnostica instalação/configuração (com `--connect` testa a API)
+- Validação de e-mail, CPF/CNPJ (dígitos verificadores) e cartão (algoritmo de Luhn,
+  mês/ano de validade e CVV) em `orders create/pay`, `accounts create` e `subscribers create`
+- Suporte à variável `PB_CONFIG_DIR` para customizar o diretório de configuração (e testes)
+- Testes unitários para validadores, config, cliente do SDK (token/erros) e doctor
+
+### Changed
+- `pb` agora é compilado em release com LTO thin, codegen-units=1 e strip (binário menor e mais rápido)
+- Refatoração: `make_client` duplicado em 13 comandos centralizado em `cli/src/client.rs`
+
+### Fixed
+- Atributo `#[test]` duplicado em `cli/src/errors.rs`
+- `qr_amount` não era validado (agora rejeita valores <= 0)
+
+### Performance
+- `pb orders create --pix` não lê mais o arquivo de configuração do disco e não cria um novo
+  client HTTP por execução: reutiliza o client do SDK (`get_url_text`)
+
 ## [0.1.8] - 2026-08-08
 
 ### Security

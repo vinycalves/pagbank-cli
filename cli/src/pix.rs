@@ -1,6 +1,7 @@
 use serde_json::Value;
 
 pub async fn handle_pix_order(
+    client: &pagbank_sdk::PagBankClient,
     order: &Value,
     pix_flag: bool,
     pix_save: Option<&str>,
@@ -15,9 +16,12 @@ pub async fn handle_pix_order(
         None => return eprintln!("Nenhum QR code PIX encontrado na resposta"),
     };
 
-    let b64 = match fetch_base64(&qr_url).await {
-        Some(b) => b,
-        None => return,
+    let b64 = match client.get_url_text(&qr_url).await {
+        Ok(b) => b.trim().to_string(),
+        Err(e) => {
+            eprintln!("Falha ao buscar QR code PIX: {e}");
+            return;
+        }
     };
 
     if pix_flag {
@@ -53,23 +57,6 @@ fn extract_qr_base64_url(order: &Value) -> Option<String> {
         }
     }
     None
-}
-
-async fn fetch_base64(url: &str) -> Option<String> {
-    let token = std::env::var("PAGBANK_TOKEN").ok().or_else(|| {
-        let config_path = dirs::config_dir()?.join("pb/config.toml");
-        let content = std::fs::read_to_string(config_path).ok()?;
-        let value: serde_json::Value = toml::from_str(&content).ok()?;
-        value["default"]["token"].as_str().map(String::from)
-    });
-
-    let client = reqwest::Client::new();
-    let mut req = client.get(url);
-    if let Some(t) = &token {
-        req = req.header("Authorization", format!("Bearer {t}"));
-    }
-    let resp = req.send().await.ok()?;
-    resp.text().await.ok().map(|s| s.trim().to_string())
 }
 
 fn save_png(b64: &str, path: &str) {

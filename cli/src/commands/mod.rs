@@ -6,6 +6,7 @@ pub mod clubpag;
 pub mod config_cmd;
 pub mod connect;
 pub mod coupons;
+pub mod doctor;
 pub mod invoices;
 pub mod keys;
 pub mod orders;

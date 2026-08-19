@@ -17,3 +17,8 @@ chrono = { version = "0.4.45", features = ["serde"] }
 uuid = { version = "1.24.0", features = ["v4"] }
 thiserror = "2.0.19"
 url = "2.5.8"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

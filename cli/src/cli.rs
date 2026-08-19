@@ -139,6 +139,11 @@ pub enum Commands {
     },
     #[command(about = "Gerar script de autocomplete para o shell")]
     Completion { shell: Shell },
+    #[command(about = "Diagnosticar a instalação e configuração do CLI (doctor)")]
+    Doctor {
+        #[arg(long, help = "Testar também a conectividade com a API do PagBank")]
+        connect: bool,
+    },
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -178,6 +183,10 @@ pub enum ConfigAction {
     Get { key: String },
     #[command(about = "Exibir configuração completa")]
     Show,
+    #[command(about = "Exibir o caminho do arquivo de configuração")]
+    Path,
+    #[command(about = "Redefinir a configuração para os valores padrão")]
+    Reset,
 }
 
 #[derive(Subcommand)]

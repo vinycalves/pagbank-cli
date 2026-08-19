@@ -149,10 +149,24 @@ fn translate_description(desc: &str) -> String {
     desc.to_string()
 }
 
-pub fn validate_order_create(method: &str, _qr_amount: Option<i64>) -> Result<(), String> {
+pub fn validate_order_create(
+    method: &str,
+    qr_amount: Option<i64>,
+    card: Option<&crate::validators::CardInfo>,
+) -> Result<(), String> {
     match method.to_lowercase().as_str() {
-        "pix" => Ok(()),
-        "credit_card" | "debit_card" => Ok(()),
+        "pix" => {
+            if let Some(qa) = qr_amount {
+                crate::validators::validate_amount(qa, "qr_amount")?;
+            }
+            Ok(())
+        }
+        "credit_card" | "debit_card" => {
+            if let Some(card) = card {
+                crate::validators::validate_card(card)?;
+            }
+            Ok(())
+        }
         _ => Err(format!(
             "método de pagamento inválido: {method}. Use pix, credit_card ou debit_card"
         )),
@@ -174,7 +188,6 @@ mod tests {
         assert!(msg.contains("qr_codes"));
     }
 
-    #[test]
     #[test]
     fn translate_400_qr_codes_raw_json() {
         let err = PagBankError::Api {
@@ -305,25 +318,50 @@ mod tests {
 
     #[test]
     fn validate_order_create_pix_without_qr() {
-        let result = validate_order_create("pix", None);
+        let result = validate_order_create("pix", None, None);
         assert!(result.is_ok());
     }
 
     #[test]
     fn validate_order_create_pix_with_qr() {
-        let result = validate_order_create("pix", Some(100));
+        let result = validate_order_create("pix", Some(100), None);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn validate_order_create_pix_with_invalid_qr() {
+        let result = validate_order_create("pix", Some(0), None);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("qr_amount"));
     }
 
     #[test]
     fn validate_order_create_credit_card() {
-        let result = validate_order_create("credit_card", None);
+        let card = crate::validators::CardInfo {
+            number: "4242424242424242",
+            exp_month: Some(12),
+            exp_year: Some(2027),
+            cvv: Some("123"),
+        };
+        let result = validate_order_create("credit_card", None, Some(&card));
         assert!(result.is_ok());
     }
 
     #[test]
+    fn validate_order_create_credit_card_invalid() {
+        let card = crate::validators::CardInfo {
+            number: "4242424242424241",
+            exp_month: Some(12),
+            exp_year: Some(2027),
+            cvv: Some("123"),
+        };
+        let result = validate_order_create("credit_card", None, Some(&card));
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn validate_order_create_invalid_method() {
-        let result = validate_order_create("boleto", None);
+        let result = validate_order_create("boleto", None, None);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("método"));
     }

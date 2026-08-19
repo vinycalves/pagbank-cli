@@ -51,6 +51,7 @@ pub async fn run(action: ConfigAction) -> Result<()> {
         }
         ConfigAction::Show => {
             let config = PbConfig::load()?;
+            println!("Arquivo: {}", PbConfig::config_path()?.display());
             println!("Ambiente: {}", config.default.environment);
             let token_display = if config.default.token.is_empty() {
                 "(não configurado)"
@@ -72,6 +73,18 @@ pub async fn run(action: ConfigAction) -> Result<()> {
                     .as_deref()
                     .unwrap_or("(não configurado)")
             );
+            Ok(())
+        }
+        ConfigAction::Path => {
+            println!("{}", PbConfig::config_path()?.display());
+            Ok(())
+        }
+        ConfigAction::Reset => {
+            let path = PbConfig::config_path()?;
+            if path.exists() {
+                std::fs::remove_file(&path)?;
+            }
+            output::print_success("Configuração redefinida para os padrões");
             Ok(())
         }
     }

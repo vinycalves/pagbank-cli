@@ -1,9 +1,11 @@
 mod cli;
+mod client;
 mod commands;
 mod config;
 mod errors;
 mod output;
 mod pix;
+mod validators;
 
 use clap::CommandFactory;
 use clap::Parser;
@@ -103,6 +105,7 @@ async fn main() -> anyhow::Result<()> {
             generate_completion(shell);
             Ok(())
         }
+        cli::Commands::Doctor { connect } => commands::doctor::run(connect).await,
     };
 
     if let Err(e) = result {
