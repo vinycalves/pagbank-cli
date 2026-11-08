@@ -51,14 +51,22 @@ A versão do CLI (`pb --version`) é definida em `Cargo.toml`. A tag deve ser ig
 # Automático (recomendado)
 ./scripts/release.sh 0.2.0
 
-# Revisar, depois push:
-git push origin main --follow-tags
+# O script cria a branch chore/release-v0.2.0 e envia o bump.
+# Abra o PR para main e faça o merge.
+
+# Depois do merge, crie a tag no commit da main:
+./scripts/tag-release.sh 0.2.0
+
+# Verifique todos os canais depois do workflow:
+./scripts/verify-release.sh 0.2.0
 
 # Ou manual:
 # 1. git checkout main && git pull
 # 2. Atualizar versão em Cargo.toml e CHANGELOG.md
 # 3. git add -A && git commit -m "chore: bump para v0.2.0"
-# 4. git tag v0.2.0 && git push origin v0.2.0
+# 4. Abrir PR para main e mergear
+# 5. git checkout main && git pull
+# 6. git tag v0.2.0 && git push origin v0.2.0
 ```
 
 O GitHub Actions valida que a tag bate com o `Cargo.toml`. Se não bater, a pipeline falha.
