@@ -1,0 +1,16 @@
+pkgbase = pagbank-cli-bin
+	pkgdesc = CLI completa em Rust para as APIs do PagBank
+	pkgver = __VERSION__
+	pkgrel = 1
+	url = https://github.com/vinycalves/pagbank-cli
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	provides = pb
+	conflicts = pb
+	source_x86_64 = https://github.com/vinycalves/pagbank-cli/releases/download/v__VERSION__/pb-x86_64-unknown-linux-gnu.tar.gz
+	sha256sums_x86_64 = __SHA256SUM_X86_64__
+	source_aarch64 = https://github.com/vinycalves/pagbank-cli/releases/download/v__VERSION__/pb-aarch64-unknown-linux-gnu.tar.gz
+	sha256sums_aarch64 = __SHA256SUM_AARCH64__
+
+pkgname = pagbank-cli-bin

@@ -4,7 +4,7 @@ Uma ferramenta de linha de comando nativa em Rust que transforma as APIs do PagB
 
 ## Filosofia
 
-O PagBank expõe dezenas de endpoints REST — pedidos, pagamentos, recorrência, ClubPag, Connect OAuth2, chaves públicas, certificados digitais e mais. O `pb` empacota tudo isso numa única interface de terminal: rápida, tipada, sem dependências de runtime.
+O PagBank expõe dezenas de endpoints REST — pedidos, pagamentos, recorrência, ClubPag, Connect OAuth2, chaves públicas, certificados digitais, chargebacks, transferências, EDI e mais. O `pb` empacota tudo isso numa única interface de terminal: rápida, tipada, sem dependências de runtime.
 
 A arquitetura reflete dois públicos diferentes:
 
@@ -22,6 +22,10 @@ A arquitetura reflete dois públicos diferentes:
 | Connect (OAuth2) | Aplicações, autorização, tokens |
 | Contas e Chaves | Cadastro, chaves públicas |
 | Certificados | Criação de certificado digital (mTLS) |
+| Chargebacks | Consulta e envio de disputa (PDF) |
+| Notificações | Preferências de webhook (criar, listar, alterar, excluir) |
+| Transferências | P2P entre contas PagBank e PIX para outros bancos |
+| EDI | Extratos transacional, financeiro, cashouts e saldos |
 | Webhooks | Verificação de autenticidade SHA-256 |
 | Diagnóstico | `pb doctor` (configuração + conectividade) e `pb config path/reset` |
 
@@ -41,14 +45,14 @@ pagbank, pagseguro, CLI, pagamentos, boleto, pix, crédito, recorrência, assina
 ## Instalação
 
 ```
-cargo install pb                        # crates.io
+cargo install pagbank-cli              # crates.io
 yay -S pagbank-cli-bin                   # AUR
-brew install vinycius/tap/pb            # Homebrew
+brew install vinycalves/tap/pb          # Homebrew
 dpkg -i pb_0.1.0_amd64.deb              # Debian/Ubuntu
 rpm -ivh pb-0.1.0-1.x86_64.rpm          # Fedora/RHEL
 ```
 
-Ou baixe o binário direto da [última release](https://github.com/vinycius/pagbank-cli/releases/latest).
+Ou baixe o binário direto da [última release](https://github.com/vinycalves/pagbank-cli/releases/latest).
 
 ## Começar
 

@@ -29,6 +29,23 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   mês/ano de validade e CVV) em `orders create/pay`, `accounts create` e `subscribers create`
 - Suporte à variável `PB_CONFIG_DIR` para customizar o diretório de configuração (e testes)
 - Testes unitários para validadores, config, cliente do SDK (token/erros) e doctor
+- **Chargebacks**: `pb chargebacks get`, `pb chargebacks dispute --file` (upload multipart de PDF)
+  e `pb chargebacks get-dispute`; modelos `Chargeback`, `ChargebackTransaction`, `Dispute`
+- **API de Notificação**: comando `pb notifications create|get|list|update|delete` para
+  `/notifications/preferences` (eventos `CHARGEBACK`, `ENROLLMENT`, `CANCELLATION`, `ORDER.CHARGE`)
+- **Transferências**: comandos `pb transfers create|get|list` para P2P e PIX em
+  `https://secure.api.pagseguro.com/transfers`, com `transfer_token` separado
+- **EDI**: comando `pb edi movements` para extratos `transactional`, `financial`, `cashouts`
+  e `balances`, com autenticação Basic (`edi_user`/`edi_token`) e base
+  `https://edi.api.pagbank.com.br`
+- **Estornos recorrentes**: `pb invoices get-refund <refund_id>` (`GET /refunds/{id}`)
+- Cliente HTTP: métodos `patch`, `post_multipart` e `get_edi` (Basic auth)
+- Serviços `Service::Transfer` e `Service::Edi`
+- Configuração: `transfer_token`, `edi_user` e `edi_token` (`pb config set/get`)
+- Modelos de charge: `ChargeFees`/`ChargeInterest` (`amount.fees.buyer.interest`),
+  `TokenData`, `AuthenticationMethod`, `Recurring`, `sub_merchant` e `notification_urls`
+- Documentação: seções de Chargeback, Notificação, Transferências e EDI em
+  `docs/api-pagbank.md` e README da SDK
 
 ### Changed
 - `pb` agora é compilado em release com LTO thin, codegen-units=1 e strip (binário menor e mais rápido)

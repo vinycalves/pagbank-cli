@@ -26,6 +26,14 @@ pub fn translate(err: &PagBankError) -> String {
             "token de recorrência não configurado. Configure 'recurring_token' no config.toml"
                 .to_string()
         }
+        PagBankError::NoTransferToken => {
+            "token de transferência não configurado. Use 'pb config set transfer_token <TOKEN>'"
+                .to_string()
+        }
+        PagBankError::NoEdiCredentials => {
+            "credenciais EDI não configuradas. Use 'pb config set edi_user <NÚMERO>' e 'pb config set edi_token <TOKEN>'"
+                .to_string()
+        }
         PagBankError::InvalidIdempotencyKey(_) => format!("{}", err),
         PagBankError::Auth(msg) => format!("erro de autenticação: {msg}"),
         PagBankError::Other(msg) => msg.clone(),
@@ -270,6 +278,19 @@ mod tests {
         let err = PagBankError::NoToken;
         let msg = translate(&err);
         assert!(msg.contains("auth login"));
+    }
+
+    #[test]
+    fn translate_no_transfer_token() {
+        let msg = translate(&PagBankError::NoTransferToken);
+        assert!(msg.contains("transfer_token"));
+    }
+
+    #[test]
+    fn translate_no_edi_credentials() {
+        let msg = translate(&PagBankError::NoEdiCredentials);
+        assert!(msg.contains("edi_user"));
+        assert!(msg.contains("edi_token"));
     }
 
     #[test]

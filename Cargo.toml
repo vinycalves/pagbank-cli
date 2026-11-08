@@ -7,7 +7,7 @@ version = "0.1.8"
 edition = "2021"
 license = "MIT"
 authors = ["Vinycius"]
-repository = "https://github.com/vinycius/pagbank-cli"
+repository = "https://github.com/vinycalves/pagbank-cli"
 
 [workspace.dependencies]
 serde = { version = "1.0.229", features = ["derive"] }

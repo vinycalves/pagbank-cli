@@ -17,12 +17,18 @@ PagBank API
 │   │   ├── Deep Link (Pagar com PagBank via app)
 │   │   ├── SDWO (carteiras digitais escalonadas)
 │   │   ├── Apple Pay / Google Pay (wallets)
+│   │   ├── Sub-merchant (facilitadores de pagamento)
 │   │   └── Divisão de pagamento (split)
 │   ├── Checkout       ← página de pagamento simplificada
 │   ├── Public Key     ← criptografia de cartão
 │   ├── Connect        ← OAuth2 (agir em nome de outro usuário)
 │   ├── Certificate    ← mTLS (segurança extra)
-│   └── 3DS Session    ← autenticação 3D Secure
+│   ├── 3DS Session    ← autenticação 3D Secure
+│   ├── Chargeback     ← contestação + disputa (PDF)
+│   └── Transfer       ← P2P entre contas PagBank e PIX (exige certificado)
+│
+├── Notificação (webhooks)
+│   └── Preference     ← eventos CHARGEBACK, ENROLLMENT, CANCELLATION, ORDER.CHARGE
 │
 ├── Recorrência (assinaturas)
 │   ├── Plan           ← modelo de cobrança
@@ -32,7 +38,7 @@ PagBank API
 │   │   └── Delete     ← remover cupons da assinatura
 │   ├── Invoice        ← fatura gerada
 │   ├── Payment        ← pagamento da fatura
-│   ├── Refund         ← estorno
+│   ├── Refund         ← estorno (criar, listar e consultar)
 │   ├── Coupon         ← desconto (avulso)
 │   ├── Retry          ← retentativa de cobrança
 │   ├── Preferences    ← notificações e chave de criptografia
@@ -41,8 +47,11 @@ PagBank API
 ├── ClubPag (fidelidade)
 │   └── ClubPag        ← cashback, benefícios, cupons
 │
-└── SDK (serviços auxiliares)
-    └── Checkout SDK   ← sessão 3DS, simulação de pagamento
+├── SDK (serviços auxiliares)
+│   └── Checkout SDK   ← sessão 3DS, simulação de pagamento
+│
+└── EDI (conciliação)
+    └── Movement       ← transacional, financeiro, cashouts, saldos (D-1)
 ```
 
 ---
@@ -230,6 +239,129 @@ Verificação de autenticidade
 
 ---
 
+## Chargebacks e Disputas
+
+Quando o portador contesta uma transação, o PagBank abre um chargeback. O lojista
+pode acompanhar o caso e enviar uma defesa (disputa) em PDF.
+
+```
+Chargeback
+├── Status: AWAITING_EVIDENCE, REVIEW_WITH_PAGBANK, SUBMITTED_ISSUER,
+│           APPROVED, DENIED, EXPIRED, CLOSED, WON, LOST
+├── classification: NOT_RECOGNIZED, DISAGREEMENT, REPORT
+├── due_date: prazo para enviar a defesa
+└── transaction: dados da venda original (cartão mascarado, NSU, TID, ARN)
+
+Disputa
+├── Só pode ser criada para chargeback em AWAITING_EVIDENCE
+├── Um único PDF por chargeback (máx. 4 MB e 18 páginas)
+├── Status: RECEIVED, ACCEPTED, REJECTED
+└── Consulta: GET /chargebacks/{cbk_id}/disputes/{disp_id}
+```
+
+| Comando CLI | Endpoint |
+|-------------|----------|
+| `pb chargebacks get <id>` | `GET /chargebacks/{id}` |
+| `pb chargebacks dispute <id> --file defesa.pdf` | `POST /chargebacks/{id}/disputes` |
+| `pb chargebacks get-dispute <cbk_id> <disp_id>` | `GET /chargebacks/{cbk_id}/disputes/{disp_id}` |
+
+---
+
+## API de Notificação (webhooks)
+
+API separada das preferências de recorrência (`/notification-preferences`).
+Cada preferência associa um ou mais eventos a uma URL de destino.
+
+```
+Eventos
+├── CHARGEBACK    → abertura/atualização de chargeback
+├── ENROLLMENT    → cadastro/credenciamento
+├── CANCELLATION  → cancelamentos
+└── ORDER.CHARGE  → cobranças de pedidos
+
+CRUD
+├── POST   /notifications/preferences
+├── GET    /notifications/preferences
+├── GET    /notifications/preferences/{pref_id}
+├── PATCH  /notifications/preferences/{pref_id}
+└── DELETE /notifications/preferences/{pref_id}
+```
+
+> Antes de criar a preferência, crie uma chave pública do tipo `webhook`
+> (`pb keys create --type WEB`) para validar a autenticidade das notificações.
+
+| Comando CLI | Endpoint |
+|-------------|----------|
+| `pb notifications create --events CHARGEBACK --target URL` | `POST /notifications/preferences` |
+| `pb notifications get <id>` | `GET /notifications/preferences/{id}` |
+| `pb notifications list` | `GET /notifications/preferences` |
+| `pb notifications update <id> --events ... --target URL` | `PATCH /notifications/preferences/{id}` |
+| `pb notifications delete <id>` | `DELETE /notifications/preferences/{id}` |
+
+---
+
+## Transferências
+
+Movimenta saldo entre contas PagBank (P2P) ou para outros bancos (PIX).
+
+```
+Pré-requisitos
+├── Certificado digital (mTLS) criado
+├── Aplicação Connect criada (client_id + client_secret)
+└── access_token com escopo transfer.create e/ou transfer.read
+
+P2P
+├── Destino por account_id ou bank_branch + account_number (ou e-mail)
+└── Status: CREATED → PROCESSING → SUCCESS | FAILED
+
+PIX
+├── Destino por chave PIX ou dados bancários
+│   (tax_id, bank_ispb, bank_branch, account_number, account_type)
+└── Requer liberação do time comercial do PagBank
+
+Notificação
+└── notification_urls recebe o resultado final da transferência
+```
+
+| Comando CLI | Endpoint |
+|-------------|----------|
+| `pb transfers create --amount 150099 --type P2P ...` | `POST /transfers` |
+| `pb transfers get <id>` | `GET /transfers/{id}` |
+| `pb transfers list --reference-id ... --start-date ...` | `GET /transfers?reference_id=&start_date=&end_date=` |
+
+> O token de transferência é diferente do token principal. Configure-o com
+> `pb config set transfer_token <TOKEN>`. A API fica em
+> `secure.api.pagseguro.com` e exige certificado digital.
+
+---
+
+## EDI (conciliação)
+
+Extrato eletrônico do dia anterior (D-1), com autenticação Basic
+(`edi_user` = número do estabelecimento e `edi_token`). Não existe sandbox.
+
+```
+GET https://edi.api.pagbank.com.br/movement/v3.00/{tipo}/{AAAA-MM-DD}
+    ?pageNumber=1&pageSize=1000
+
+Tipos
+├── transactional → vendas, chargebacks, cancelamentos, ajustes e split
+├── financial     → liquidações, pagamentos, cashouts e antecipações
+├── cashouts      → saques para banco, PagBank ou saldo carteira
+└── balances      → saldos
+
+Resposta
+├── detalhes[]    → linhas do extrato (campos variam por tipo)
+├── pagination    → elements, totalPages, page, totalElements
+└── header VALIDADO → true quando o dia está completo
+```
+
+| Comando CLI | Endpoint |
+|-------------|----------|
+| `pb edi movements --type transactional --date 2026-11-06` | `GET /movement/v3.00/transactional/2026-11-06` |
+
+---
+
 ## Mapeamento CLI → API
 
 | Comando CLI | Endpoint | Descrição |
@@ -294,6 +426,7 @@ Verificação de autenticidade
 | `pb invoices get-payment <id>` | `GET /payments/{id}` | Consultar pagamento |
 | `pb invoices list-payments` | `GET /payments` | Listar pagamentos c/ filtros |
 | `pb invoices list-seller-refunds` | `GET /refunds` | Listar estornos do vendedor |
+| `pb invoices get-refund <id>` | `GET /refunds/{id}` | Consultar estorno |
 | `pb preferences get` | `GET /notification-preferences` | Preferências de notificação |
 | `pb preferences update <json>` | `PUT /notification-preferences` | Alterar preferências |
 | `pb preferences encryption-key-get` | `GET /encryption-key` | Chave de criptografia |
@@ -308,4 +441,16 @@ Verificação de autenticidade
 | `pb clubpag redeem` | `POST /clubpag/benefits/redeem` | Resgatar benefício |
 | `pb clubpag cashback` | `GET /clubpag/cashback` | Detalhes cashback |
 | `pb clubpag coupons` | `GET /clubpag/coupons` | Cupons ClubPag |
+| `pb chargebacks get <id>` | `GET /chargebacks/{id}` | Consultar chargeback |
+| `pb chargebacks dispute <id> --file` | `POST /chargebacks/{id}/disputes` | Enviar disputa |
+| `pb chargebacks get-dispute <cbk> <disp>` | `GET /chargebacks/{cbk}/disputes/{disp}` | Consultar disputa |
+| `pb notifications create` | `POST /notifications/preferences` | Criar preferência |
+| `pb notifications get <id>` | `GET /notifications/preferences/{id}` | Consultar preferência |
+| `pb notifications list` | `GET /notifications/preferences` | Listar preferências |
+| `pb notifications update <id>` | `PATCH /notifications/preferences/{id}` | Alterar preferência |
+| `pb notifications delete <id>` | `DELETE /notifications/preferences/{id}` | Excluir preferência |
+| `pb transfers create` | `POST /transfers` | Criar transferência |
+| `pb transfers get <id>` | `GET /transfers/{id}` | Consultar transferência |
+| `pb transfers list` | `GET /transfers` | Listar transferências |
+| `pb edi movements --type --date` | `GET /movement/v3.00/{tipo}/{data}` | Extrato EDI |
 | `pb webhooks verify` | — (offline) | Verificar assinatura SHA-256 |

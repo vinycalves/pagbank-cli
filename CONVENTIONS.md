@@ -365,9 +365,12 @@ output::print_success("Operação realizada com sucesso");
 
 | Serviço | Uso |
 |---------|-----|
-| `Service::Main` | Orders, Charges, Checkouts, Accounts, Keys, etc. |
+| `Service::Main` | Orders, Charges, Checkouts, Accounts, Keys, Chargebacks, Notifications |
 | `Service::Recurring` | Plans, Subscribers, Subscriptions, Coupons, Invoices |
 | `Service::Secure` | Connect (OAuth2), Certificates |
+| `Service::Sdk` | 3DS / Checkout SDK |
+| `Service::Transfer` | Transferências P2P e PIX (usa `transfer_token`) |
+| `Service::Edi` | Extratos EDI (Basic auth com `edi_user`/`edi_token`) |
 
 ### Serialização JSON
 

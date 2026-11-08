@@ -65,6 +65,19 @@ pub async fn run(action: ConfigAction) -> Result<()> {
                 "(não configurado)"
             };
             println!("Token recorrência: {recurring_display}");
+            let transfer_display = if config.default.transfer_token.is_some() {
+                "configurado"
+            } else {
+                "(não configurado)"
+            };
+            println!("Token transferência: {transfer_display}");
+            let edi_display =
+                if config.default.edi_user.is_some() && config.default.edi_token.is_some() {
+                    "configurado"
+                } else {
+                    "(não configurado)"
+                };
+            println!("Credenciais EDI: {edi_display}");
             println!(
                 "Client ID: {}",
                 config

@@ -9,6 +9,9 @@ impl Default for EnvironmentConfig {
             environment: "sandbox".to_string(),
             token: String::new(),
             recurring_token: None,
+            transfer_token: None,
+            edi_user: None,
+            edi_token: None,
             client_id: None,
             client_secret: None,
         }
@@ -30,6 +33,12 @@ pub struct EnvironmentConfig {
     pub token: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recurring_token: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transfer_token: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub edi_user: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub edi_token: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -106,6 +115,9 @@ impl PbConfig {
             "token" => self.default.token = value.to_string(),
             "environment" => self.default.environment = value.to_string(),
             "recurring_token" => self.default.recurring_token = Some(value.to_string()),
+            "transfer_token" => self.default.transfer_token = Some(value.to_string()),
+            "edi_user" => self.default.edi_user = Some(value.to_string()),
+            "edi_token" => self.default.edi_token = Some(value.to_string()),
             "client_id" => self.default.client_id = Some(value.to_string()),
             "client_secret" => self.default.client_secret = Some(value.to_string()),
             _ => anyhow::bail!("chave desconhecida: {key}"),
@@ -119,6 +131,9 @@ impl PbConfig {
             "token" => Ok(cfg.token.clone()),
             "environment" => Ok(cfg.environment.clone()),
             "recurring_token" => Ok(cfg.recurring_token.clone().unwrap_or_default()),
+            "transfer_token" => Ok(cfg.transfer_token.clone().unwrap_or_default()),
+            "edi_user" => Ok(cfg.edi_user.clone().unwrap_or_default()),
+            "edi_token" => Ok(cfg.edi_token.clone().unwrap_or_default()),
             "client_id" => Ok(cfg.client_id.clone().unwrap_or_default()),
             "client_secret" => Ok(cfg.client_secret.clone().unwrap_or_default()),
             _ => anyhow::bail!("chave desconhecida: {key}"),
@@ -145,6 +160,9 @@ mod tests {
                 environment: "sandbox".to_string(),
                 token: "abc123".to_string(),
                 recurring_token: Some("def456".to_string()),
+                transfer_token: Some("transfer".to_string()),
+                edi_user: Some("123456789".to_string()),
+                edi_token: Some("edi_token".to_string()),
                 client_id: None,
                 client_secret: None,
             },
@@ -152,6 +170,9 @@ mod tests {
                 environment: "production".to_string(),
                 token: "prod_token".to_string(),
                 recurring_token: None,
+                transfer_token: None,
+                edi_user: None,
+                edi_token: None,
                 client_id: Some("app_id".to_string()),
                 client_secret: Some("secret".to_string()),
             }),
@@ -163,6 +184,8 @@ mod tests {
         assert_eq!(parsed.default.environment, "sandbox");
         assert_eq!(parsed.default.token, "abc123");
         assert_eq!(parsed.default.recurring_token, Some("def456".to_string()));
+        assert_eq!(parsed.default.transfer_token, Some("transfer".to_string()));
+        assert_eq!(parsed.default.edi_user, Some("123456789".to_string()));
         assert!(parsed.default.client_id.is_none());
         let prod = parsed.production.unwrap();
         assert_eq!(prod.client_id, Some("app_id".to_string()));
@@ -271,6 +294,26 @@ mod tests {
     fn set_value_unknown_key_errors() {
         let mut config = PbConfig::default();
         assert!(config.set_value("foo", "bar").is_err());
+    }
+
+    #[test]
+    fn set_and_get_transfer_and_edi_credentials() {
+        let _guard = env_guard();
+        let dir = std::env::temp_dir().join(format!("pb-credentials-test-{}", std::process::id()));
+        std::env::set_var("PB_CONFIG_DIR", &dir);
+
+        let mut config = PbConfig::default();
+        config.set_value("transfer_token", "transfer-123").unwrap();
+        config.set_value("edi_user", "126984538").unwrap();
+        config.set_value("edi_token", "edi-123").unwrap();
+
+        let loaded = PbConfig::load().unwrap();
+        assert_eq!(loaded.get_value("transfer_token").unwrap(), "transfer-123");
+        assert_eq!(loaded.get_value("edi_user").unwrap(), "126984538");
+        assert_eq!(loaded.get_value("edi_token").unwrap(), "edi-123");
+
+        std::env::remove_var("PB_CONFIG_DIR");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[cfg(unix)]
