@@ -260,7 +260,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "$AUR_SSH_KEY" > ~/.ssh/aur
           chmod 600 ~/.ssh/aur
-          printf "Host aur.archlinux.org\n  StrictHostKeyChecking accept-new\n" > ~/.ssh/config
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/aur -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
           git clone "ssh://aur@aur.archlinux.org/pagbank-cli-bin.git" /tmp/aur-repo
           cp dist/aur/PKGBUILD dist/aur/.SRCINFO /tmp/aur-repo/
           cd /tmp/aur-repo
@@ -294,14 +294,18 @@ jobs:
 
       - name: Push to Homebrew tap
         env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP_SSH_KEY: ${{ secrets.HOMEBREW_TAP_SSH_KEY }}
         run: |
-          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
-            echo "HOMEBREW_TAP_TOKEN não definida — pulando Homebrew"
+          if [ -z "$HOMEBREW_TAP_SSH_KEY" ]; then
+            echo "HOMEBREW_TAP_SSH_KEY não definida — pulando Homebrew"
             exit 0
           fi
           VERSION="${GITHUB_REF_NAME#v}"
-          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/vinycalves/homebrew-tap.git" /tmp/homebrew-tap
+          mkdir -p ~/.ssh
+          echo "$HOMEBREW_TAP_SSH_KEY" > ~/.ssh/homebrew_tap
+          chmod 600 ~/.ssh/homebrew_tap
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/homebrew_tap -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git clone git@github.com:vinycalves/homebrew-tap.git /tmp/homebrew-tap
           cp dist/homebrew/pb.rb /tmp/homebrew-tap/Formula/
           cd /tmp/homebrew-tap
           git config user.name "github-actions"
@@ -311,3 +315,12 @@ jobs:
             git commit -m "pb v$VERSION"
             git push
           }
+
+  verify:
+    needs: [create-release, upload, upload-packages, aur, homebrew]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify release channels
+        run: ./scripts/verify-release.sh "${GITHUB_REF_NAME#v}"

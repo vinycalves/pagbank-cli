@@ -10,16 +10,26 @@ fi
 VERSION="$1"
 BRANCH=$(git branch --show-current)
 
-if [ "$BRANCH" != "main" ]; then
-  echo "Erro: este script deve ser executado na branch main"
-  exit 1
-fi
-
 # Verificar se há mudanças não commitadas
 if ! git diff --quiet; then
   echo "Erro: há mudanças não commitadas. Commit ou stash antes de release."
   exit 1
 fi
+
+if [ "$BRANCH" = "main" ]; then
+  RELEASE_BRANCH="chore/release-v$VERSION"
+  echo "→ main é protegida; criando branch $RELEASE_BRANCH..."
+  git checkout -b "$RELEASE_BRANCH"
+  BRANCH="$RELEASE_BRANCH"
+fi
+
+case "$BRANCH" in
+  chore/release-v*) ;;
+  *)
+    echo "Erro: execute na main ou em uma branch chore/release-v*."
+    exit 1
+    ;;
+esac
 
 echo "→ Atualizando Cargo.toml para v$VERSION..."
 sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
@@ -28,11 +38,12 @@ echo "→ Atualizando CHANGELOG.md..."
 DATE=$(date +%Y-%m-%d)
 sed -i "s/^## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
 
-echo "→ Commitando e tagueando..."
+echo "→ Commitando e enviando a branch..."
 git add Cargo.toml CHANGELOG.md
 git commit -m "chore: bump para v$VERSION"
-git tag "v$VERSION"
+git push -u origin "$BRANCH"
 
-echo "✓ Pronto! Revise o commit e push:"
-echo "  git push origin main"
-echo "  git push origin v$VERSION"
+echo "✓ Bump enviado em $BRANCH."
+echo "  1. Abra e mergeie o PR de $BRANCH para main."
+echo "  2. Depois do merge, crie a tag com:"
+echo "     ./scripts/tag-release.sh $VERSION"

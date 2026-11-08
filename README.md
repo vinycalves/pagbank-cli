@@ -48,8 +48,8 @@ pagbank, pagseguro, CLI, pagamentos, boleto, pix, crédito, recorrência, assina
 cargo install pagbank-cli              # crates.io
 yay -S pagbank-cli-bin                   # AUR
 brew install vinycalves/tap/pb          # Homebrew
-dpkg -i pb_0.1.0_amd64.deb              # Debian/Ubuntu
-rpm -ivh pb-0.1.0-1.x86_64.rpm          # Fedora/RHEL
+dpkg -i pagbank-cli_0.2.0-1_amd64.deb  # Debian/Ubuntu
+rpm -ivh pb-0.2.0-1.x86_64.rpm          # Fedora/RHEL
 ```
 
 Ou baixe o binário direto da [última release](https://github.com/vinycalves/pagbank-cli/releases/latest).
