@@ -24,15 +24,12 @@ fi
 echo "→ Atualizando Cargo.toml para v$VERSION..."
 sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
 
-echo "→ Atualizando Cargo.lock..."
-cargo check --workspace --quiet
-
 echo "→ Atualizando CHANGELOG.md..."
 DATE=$(date +%Y-%m-%d)
 sed -i "s/^## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
 
 echo "→ Commitando e tagueando..."
-git add Cargo.toml Cargo.lock CHANGELOG.md
+git add Cargo.toml CHANGELOG.md
 git commit -m "chore: bump para v$VERSION"
 git tag "v$VERSION"
 

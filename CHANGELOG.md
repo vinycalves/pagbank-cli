@@ -21,6 +21,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-08
+
 ### Added
 - Comando `pb config path` exibe o caminho do arquivo de configuração
 - Comando `pb config reset` restaura a configuração padrão
