@@ -62,6 +62,13 @@ pub async fn list_refunds(
     crate::models::parse_list(resp).await
 }
 
+pub async fn get_refund(client: &PagBankClient, refund_id: &str) -> Result<Refund, PagBankError> {
+    let resp = client
+        .get(Service::Recurring, &format!("/refunds/{refund_id}"))
+        .await?;
+    crate::models::parse_response(resp).await
+}
+
 pub async fn list_seller_refunds(
     client: &PagBankClient,
     params: &[(String, String)],

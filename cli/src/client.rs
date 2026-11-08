@@ -9,6 +9,9 @@ pub fn make_client(config: &PbConfig, env_override: Option<&str>) -> Result<PagB
         environment: active.environment.parse().unwrap_or(Environment::Sandbox),
         token: active.token.clone(),
         recurring_token: active.recurring_token.clone(),
+        transfer_token: active.transfer_token.clone(),
+        edi_user: active.edi_user.clone(),
+        edi_token: active.edi_token.clone(),
         client_id: active.client_id.clone(),
         client_secret: active.client_secret.clone(),
     };
@@ -40,5 +43,17 @@ mod tests {
         let config = PbConfig::default();
         let client = make_client(&config, Some("production")).unwrap();
         assert_eq!(client.config.environment, Environment::Sandbox);
+    }
+
+    #[test]
+    fn make_client_maps_transfer_and_edi_credentials() {
+        let mut config = PbConfig::default();
+        config.default.transfer_token = Some("transfer".to_string());
+        config.default.edi_user = Some("123".to_string());
+        config.default.edi_token = Some("edi".to_string());
+        let client = make_client(&config, None).unwrap();
+        assert_eq!(client.config.transfer_token.as_deref(), Some("transfer"));
+        assert_eq!(client.config.edi_user.as_deref(), Some("123"));
+        assert_eq!(client.config.edi_token.as_deref(), Some("edi"));
     }
 }

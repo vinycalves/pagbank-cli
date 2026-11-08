@@ -57,6 +57,16 @@ async fn main() -> anyhow::Result<()> {
         cli::Commands::Invoices { action } => {
             commands::invoices::run(action, env_override, output_fmt).await
         }
+        cli::Commands::Chargebacks { action } => {
+            commands::chargebacks::run(action, env_override, output_fmt).await
+        }
+        cli::Commands::Notifications { action } => {
+            commands::notifications::run(action, env_override, output_fmt).await
+        }
+        cli::Commands::Transfers { action } => {
+            commands::transfers::run(action, env_override, output_fmt).await
+        }
+        cli::Commands::Edi { action } => commands::edi::run(action, env_override, output_fmt).await,
         cli::Commands::Clubpag { action } => {
             commands::clubpag::run(action, env_override, output_fmt).await
         }

@@ -27,6 +27,12 @@ pub enum PagBankError {
     #[error("token de recorrência não configurado")]
     NoRecurringToken,
 
+    #[error("token de transferência não configurado")]
+    NoTransferToken,
+
+    #[error("credenciais EDI não configuradas (edi_user/edi_token)")]
+    NoEdiCredentials,
+
     #[error("idempotency key inválida: {0}")]
     InvalidIdempotencyKey(String),
 
@@ -73,6 +79,18 @@ mod tests {
     fn error_display_no_recurring_token() {
         let err = PagBankError::NoRecurringToken;
         assert_eq!(err.to_string(), "token de recorrência não configurado");
+    }
+
+    #[test]
+    fn error_display_no_transfer_token() {
+        let err = PagBankError::NoTransferToken;
+        assert_eq!(err.to_string(), "token de transferência não configurado");
+    }
+
+    #[test]
+    fn error_display_no_edi_credentials() {
+        let err = PagBankError::NoEdiCredentials;
+        assert!(err.to_string().contains("edi_user"));
     }
 
     #[test]

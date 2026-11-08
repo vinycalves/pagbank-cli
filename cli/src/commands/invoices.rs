@@ -87,6 +87,15 @@ pub async fn run(
             }
             Ok(())
         }
+        InvoicesAction::GetRefund { refund_id } => {
+            let result = pagbank_sdk::endpoints::invoices::get_refund(&client, &refund_id).await?;
+            let val = serde_json::to_value(result)?;
+            match output_fmt {
+                crate::cli::OutputFormat::Json => output::print_json(&val),
+                crate::cli::OutputFormat::Table => output::print_object_table("Estorno", &val),
+            }
+            Ok(())
+        }
         InvoicesAction::GetPayment { payment_id } => {
             let result =
                 pagbank_sdk::endpoints::invoices::get_payment(&client, &payment_id).await?;

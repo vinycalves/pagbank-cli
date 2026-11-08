@@ -34,6 +34,8 @@ pub enum Service {
     Recurring,
     Secure,
     Sdk,
+    Transfer,
+    Edi,
 }
 
 impl Service {
@@ -51,6 +53,10 @@ impl Service {
             (Service::Secure, Environment::Production) => "https://secure.api.pagseguro.com",
             (Service::Sdk, Environment::Sandbox) => "https://sandbox.sdk.pagseguro.com",
             (Service::Sdk, Environment::Production) => "https://sdk.pagseguro.com",
+            (Service::Transfer, Environment::Sandbox) => "https://secure.sandbox.api.pagseguro.com",
+            (Service::Transfer, Environment::Production) => "https://secure.api.pagseguro.com",
+            // O EDI não possui ambiente sandbox: todas as chamadas usam produção.
+            (Service::Edi, _) => "https://edi.api.pagbank.com.br",
         }
     }
 }
@@ -60,6 +66,9 @@ pub struct PagBankConfig {
     pub environment: Environment,
     pub token: String,
     pub recurring_token: Option<String>,
+    pub transfer_token: Option<String>,
+    pub edi_user: Option<String>,
+    pub edi_token: Option<String>,
     pub client_id: Option<String>,
     pub client_secret: Option<String>,
 }
@@ -70,6 +79,9 @@ impl Default for PagBankConfig {
             environment: Environment::Sandbox,
             token: String::new(),
             recurring_token: None,
+            transfer_token: None,
+            edi_user: None,
+            edi_token: None,
             client_id: None,
             client_secret: None,
         }
@@ -138,6 +150,14 @@ mod tests {
             Service::Sdk.base_url(&Environment::Sandbox),
             "https://sandbox.sdk.pagseguro.com"
         );
+        assert_eq!(
+            Service::Transfer.base_url(&Environment::Sandbox),
+            "https://secure.sandbox.api.pagseguro.com"
+        );
+        assert_eq!(
+            Service::Edi.base_url(&Environment::Sandbox),
+            "https://edi.api.pagbank.com.br"
+        );
     }
 
     #[test]
@@ -158,6 +178,14 @@ mod tests {
             Service::Sdk.base_url(&Environment::Production),
             "https://sdk.pagseguro.com"
         );
+        assert_eq!(
+            Service::Transfer.base_url(&Environment::Production),
+            "https://secure.api.pagseguro.com"
+        );
+        assert_eq!(
+            Service::Edi.base_url(&Environment::Production),
+            "https://edi.api.pagbank.com.br"
+        );
     }
 
     #[test]
@@ -166,6 +194,9 @@ mod tests {
         assert_eq!(config.environment, Environment::Sandbox);
         assert_eq!(config.token, "");
         assert!(config.recurring_token.is_none());
+        assert!(config.transfer_token.is_none());
+        assert!(config.edi_user.is_none());
+        assert!(config.edi_token.is_none());
         assert!(config.client_id.is_none());
         assert!(config.client_secret.is_none());
     }

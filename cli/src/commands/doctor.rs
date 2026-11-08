@@ -54,6 +54,20 @@ pub async fn run(connect: bool) -> Result<()> {
         println!("✓ Token de recorrência configurado");
     }
 
+    if config.default.transfer_token.is_none() {
+        println!(
+            "⚠ Token de transferência não configurado (necessário apenas para transferências)"
+        );
+    } else {
+        println!("✓ Token de transferência configurado");
+    }
+
+    if config.default.edi_user.is_some() && config.default.edi_token.is_some() {
+        println!("✓ Credenciais EDI configuradas");
+    } else {
+        println!("⚠ Credenciais EDI não configuradas (necessário apenas para extratos EDI)");
+    }
+
     if connect {
         match check_connectivity(&config).await {
             Ok(status) => println!("✓ API acessível (HTTP {status})"),

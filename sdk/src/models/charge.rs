@@ -36,6 +36,12 @@ pub struct Charge {
     pub raw_data: Option<RawData>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dwo: Option<Dwo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recurring: Option<Recurring>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sub_merchant: Option<super::order::SubMerchant>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub notification_urls: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,6 +51,28 @@ pub struct ChargeAmount {
     pub currency: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub summary: Option<ChargeSummary>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fees: Option<ChargeFees>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChargeFees {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub buyer: Option<ChargeBuyerFees>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChargeBuyerFees {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub interest: Option<ChargeInterest>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChargeInterest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub installments: Option<i32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,6 +105,59 @@ pub struct PaymentMethod {
     pub soft_descriptor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capture_before: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_data: Option<TokenData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authentication_method: Option<AuthenticationMethod>,
+}
+
+/// Dados adicionais de tokenização de rede (Visa/Mastercard).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TokenData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub requestor_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wallet: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cryptogram: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ecommerce_domain: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assurance_level: Option<i32>,
+}
+
+/// Dados de autenticação 3DS/InApp vinculados à transação.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticationMethod {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "type")]
+    pub authentication_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cavv: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub eci: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub xid: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dstrans_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+/// Indica que a cobrança é proveniente de uma recorrência própria do lojista.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Recurring {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "type")]
+    pub recurring_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recurrence_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub original_amount: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -301,6 +382,12 @@ pub struct ChargeRequest {
     pub payment_method: Option<PaymentMethod>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dwo: Option<Dwo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sub_merchant: Option<super::order::SubMerchant>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub notification_urls: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recurring: Option<Recurring>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -311,4 +398,88 @@ pub struct PayOrderRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CardStoreRequest {
     pub card: Card,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn charge_amount_with_buyer_fees() {
+        let json = r#"{
+            "value": 10887,
+            "currency": "BRL",
+            "fees": {
+                "buyer": {
+                    "interest": {"total": 887, "installments": 4}
+                }
+            },
+            "summary": {"total": 10887, "paid": 0, "refunded": 0}
+        }"#;
+        let amount: ChargeAmount = serde_json::from_str(json).unwrap();
+        let fees = amount.fees.unwrap();
+        let interest = fees.buyer.unwrap().interest.unwrap();
+        assert_eq!(interest.total, Some(887));
+        assert_eq!(interest.installments, Some(4));
+    }
+
+    #[test]
+    fn charge_request_serializes_sub_merchant_and_recurring() {
+        let request = ChargeRequest {
+            reference_id: None,
+            description: None,
+            amount: ChargeAmount {
+                value: 1000,
+                currency: "BRL".to_string(),
+                summary: None,
+                fees: None,
+            },
+            payment_method: None,
+            dwo: None,
+            sub_merchant: Some(super::super::order::SubMerchant {
+                reference_id: Some("SUB-1".to_string()),
+                name: Some("Loja".to_string()),
+                tax_id: Some("12345678909".to_string()),
+                mcc: Some("155".to_string()),
+                address: None,
+            }),
+            notification_urls: Some(vec!["https://meusite.com/webhook".to_string()]),
+            recurring: Some(Recurring {
+                recurring_type: Some("INITIAL".to_string()),
+                recurrence_id: None,
+                original_amount: Some(1000),
+            }),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["sub_merchant"]["reference_id"], "SUB-1");
+        assert_eq!(json["recurring"]["type"], "INITIAL");
+        assert_eq!(json["notification_urls"][0], "https://meusite.com/webhook");
+    }
+
+    #[test]
+    fn payment_method_token_data_and_authentication() {
+        let json = r#"{
+            "type": "DEBIT_CARD",
+            "token_data": {
+                "requestor_id": "12345678901",
+                "wallet": "APPLE_PAY",
+                "cryptogram": "abc",
+                "assurance_level": 99
+            },
+            "authentication_method": {
+                "id": "3DS_15CB7893",
+                "type": "THREEDS",
+                "eci": "01",
+                "status": "AUTHENTICATED"
+            }
+        }"#;
+        let method: PaymentMethod = serde_json::from_str(json).unwrap();
+        assert_eq!(
+            method.token_data.as_ref().unwrap().wallet.as_deref(),
+            Some("APPLE_PAY")
+        );
+        let auth = method.authentication_method.unwrap();
+        assert_eq!(auth.authentication_type.as_deref(), Some("THREEDS"));
+        assert_eq!(auth.status.as_deref(), Some("AUTHENTICATED"));
+    }
 }

@@ -115,6 +115,26 @@ pub enum Commands {
         #[command(subcommand)]
         action: InvoicesAction,
     },
+    #[command(about = "Consultar chargebacks e enviar disputas (defesas)")]
+    Chargebacks {
+        #[command(subcommand)]
+        action: ChargebacksAction,
+    },
+    #[command(about = "Gerenciar preferências de notificação (webhooks)")]
+    Notifications {
+        #[command(subcommand)]
+        action: NotificationsAction,
+    },
+    #[command(about = "Realizar e consultar transferências P2P e PIX")]
+    Transfers {
+        #[command(subcommand)]
+        action: TransfersAction,
+    },
+    #[command(about = "Consultar extratos EDI (transacional, financeiro, cashouts, saldos)")]
+    Edi {
+        #[command(subcommand)]
+        action: EdiAction,
+    },
     #[command(about = "Gerenciar ClubPag (benefícios, cashback, cupons)")]
     Clubpag {
         #[command(subcommand)]
@@ -733,6 +753,11 @@ pub enum InvoicesAction {
         #[arg(help = "ID do pagamento para listar estornos")]
         payment_id: String,
     },
+    #[command(about = "Consultar um estorno pelo ID")]
+    GetRefund {
+        #[arg(help = "ID do estorno (ex: REFU_XXXX)")]
+        refund_id: String,
+    },
     #[command(about = "Consultar pagamento recorrente pelo ID")]
     GetPayment {
         #[arg(help = "ID do pagamento recorrente")]
@@ -849,4 +874,288 @@ pub enum WebhooksAction {
         #[arg(help = "Arquivo contendo o payload bruto do webhook (ou ler da stdin)")]
         payload_file: Option<String>,
     },
+}
+
+#[derive(Subcommand)]
+pub enum ChargebacksAction {
+    #[command(about = "Consultar chargeback pelo ID")]
+    Get {
+        #[arg(help = "ID do chargeback (ex: CBKS_XXXX)")]
+        id: String,
+    },
+    #[command(about = "Enviar defesa (PDF) para um chargeback")]
+    Dispute {
+        #[arg(help = "ID do chargeback a ser disputado")]
+        id: String,
+        #[arg(
+            long,
+            help = "Caminho do arquivo PDF de evidência (máx. 4 MB e 18 páginas)"
+        )]
+        file: String,
+    },
+    #[command(about = "Consultar uma disputa de chargeback")]
+    GetDispute {
+        #[arg(help = "ID do chargeback")]
+        chargeback_id: String,
+        #[arg(help = "ID da disputa (ex: DISP_XXXX)")]
+        dispute_id: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum NotificationsAction {
+    #[command(about = "Criar preferência de notificação (webhook)")]
+    Create {
+        #[arg(
+            long,
+            value_delimiter = ',',
+            help = "Eventos separados por vírgula: CHARGEBACK, ENROLLMENT, CANCELLATION, ORDER.CHARGE"
+        )]
+        events: Vec<String>,
+        #[arg(long, help = "URL de destino do webhook")]
+        target: String,
+    },
+    #[command(about = "Consultar preferência de notificação pelo ID")]
+    Get {
+        #[arg(help = "ID da preferência (ex: PREF_XXXX)")]
+        id: String,
+    },
+    #[command(about = "Listar todas as preferências de notificação")]
+    List,
+    #[command(about = "Alterar uma preferência de notificação")]
+    Update {
+        #[arg(help = "ID da preferência (ex: PREF_XXXX)")]
+        id: String,
+        #[arg(
+            long,
+            value_delimiter = ',',
+            help = "Novos eventos separados por vírgula (omita para manter)"
+        )]
+        events: Vec<String>,
+        #[arg(long, help = "Nova URL de destino (omita para manter)")]
+        target: Option<String>,
+    },
+    #[command(about = "Excluir uma preferência de notificação")]
+    Delete {
+        #[arg(help = "ID da preferência (ex: PREF_XXXX)")]
+        id: String,
+    },
+}
+
+#[derive(Subcommand)]
+#[allow(clippy::large_enum_variant)]
+pub enum TransfersAction {
+    #[command(about = "Criar transferência P2P ou PIX")]
+    Create {
+        #[arg(long, help = "Valor em centavos (ex: 150099 = R$ 1.500,99)")]
+        amount: i64,
+        #[arg(
+            long,
+            default_value = "P2P",
+            value_parser = ["P2P", "PIX"],
+            help = "Tipo da transferência: P2P (conta PagBank) ou PIX (outra instituição)"
+        )]
+        r#type: String,
+        #[arg(long, help = "Descrição da transferência (até 72 caracteres)")]
+        description: Option<String>,
+        #[arg(
+            long,
+            help = "Identificador próprio da transferência (até 64 caracteres)"
+        )]
+        reference_id: Option<String>,
+        #[arg(long, help = "URL que receberá a notificação da transferência")]
+        notification_url: String,
+        #[arg(
+            long,
+            help = "Agência da conta de destino (P2P ou PIX por dados bancários)"
+        )]
+        bank_branch: Option<String>,
+        #[arg(long, help = "Número da conta de destino, com dígito e sem hífen")]
+        account_number: Option<String>,
+        #[arg(long, help = "ID da conta PagBank de destino (P2P)")]
+        account_id: Option<String>,
+        #[arg(long, help = "E-mail do recebedor PagBank (P2P)")]
+        email: Option<String>,
+        #[arg(long, help = "Chave PIX de destino (PIX)")]
+        pix_key: Option<String>,
+        #[arg(long, help = "Nome do recebedor PIX")]
+        pix_name: Option<String>,
+        #[arg(long, help = "CPF/CNPJ do recebedor PIX")]
+        pix_tax_id: Option<String>,
+        #[arg(long, help = "ISPB do banco do recebedor (PIX por dados bancários)")]
+        bank_ispb: Option<String>,
+        #[arg(
+            long,
+            value_parser = ["CC", "PP", "PG", "CS"],
+            help = "Tipo da conta de destino (PIX por dados bancários)"
+        )]
+        account_type: Option<String>,
+    },
+    #[command(about = "Consultar transferência pelo ID")]
+    Get {
+        #[arg(help = "ID da transferência (ex: TRAN_XXXX)")]
+        id: String,
+    },
+    #[command(about = "Listar transferências por cliente ou período")]
+    List {
+        #[arg(long, help = "Identificador próprio informado na criação")]
+        reference_id: Option<String>,
+        #[arg(long, help = "Data inicial (YYYY-MM-DD)")]
+        start_date: Option<String>,
+        #[arg(long, help = "Data final (YYYY-MM-DD)")]
+        end_date: Option<String>,
+        #[arg(long, help = "Hash da próxima página retornado na consulta anterior")]
+        hash: Option<String>,
+        #[arg(long, help = "Quantidade de itens por página (máx. 20)")]
+        size: Option<i32>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum EdiMovementType {
+    Transactional,
+    Financial,
+    Cashouts,
+    Balances,
+}
+
+impl EdiMovementType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            EdiMovementType::Transactional => "transactional",
+            EdiMovementType::Financial => "financial",
+            EdiMovementType::Cashouts => "cashouts",
+            EdiMovementType::Balances => "balances",
+        }
+    }
+}
+
+#[derive(Subcommand)]
+pub enum EdiAction {
+    #[command(about = "Consultar movimentos de um dia no extrato EDI")]
+    Movements {
+        #[arg(
+            long,
+            value_enum,
+            default_value = "transactional",
+            help = "Tipo de movimento: transactional, financial, cashouts ou balances"
+        )]
+        r#type: EdiMovementType,
+        #[arg(long, help = "Data do movimento (YYYY-MM-DD, sempre D-1 ou anterior)")]
+        date: String,
+        #[arg(long, default_value = "1", help = "Número da página")]
+        page: i32,
+        #[arg(long, default_value = "1000", help = "Itens por página (máx. 1000)")]
+        page_size: i32,
+    },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_chargebacks_dispute() {
+        let cli = Cli::try_parse_from([
+            "pb",
+            "chargebacks",
+            "dispute",
+            "CBKS_1",
+            "--file",
+            "defesa.pdf",
+        ])
+        .unwrap();
+        match cli.command {
+            Commands::Chargebacks {
+                action: ChargebacksAction::Dispute { id, file },
+            } => {
+                assert_eq!(id, "CBKS_1");
+                assert_eq!(file, "defesa.pdf");
+            }
+            _ => panic!("comando inesperado"),
+        }
+    }
+
+    #[test]
+    fn parse_notifications_create_events() {
+        let cli = Cli::try_parse_from([
+            "pb",
+            "notifications",
+            "create",
+            "--events",
+            "CHARGEBACK,ORDER.CHARGE",
+            "--target",
+            "https://meusite.com/notificacoes",
+        ])
+        .unwrap();
+        match cli.command {
+            Commands::Notifications {
+                action: NotificationsAction::Create { events, target },
+            } => {
+                assert_eq!(events, vec!["CHARGEBACK", "ORDER.CHARGE"]);
+                assert_eq!(target, "https://meusite.com/notificacoes");
+            }
+            _ => panic!("comando inesperado"),
+        }
+    }
+
+    #[test]
+    fn parse_transfers_create_pix() {
+        let cli = Cli::try_parse_from([
+            "pb",
+            "transfers",
+            "create",
+            "--amount",
+            "150099",
+            "--type",
+            "PIX",
+            "--pix-key",
+            "chave@pix.com",
+            "--notification-url",
+            "https://meusite.com/webhook",
+        ])
+        .unwrap();
+        match cli.command {
+            Commands::Transfers {
+                action: TransfersAction::Create { amount, r#type, .. },
+            } => {
+                assert_eq!(amount, 150099);
+                assert_eq!(r#type, "PIX");
+            }
+            _ => panic!("comando inesperado"),
+        }
+    }
+
+    #[test]
+    fn parse_edi_movements_defaults() {
+        let cli = Cli::try_parse_from(["pb", "edi", "movements", "--date", "2026-11-06"]).unwrap();
+        match cli.command {
+            Commands::Edi {
+                action:
+                    EdiAction::Movements {
+                        r#type,
+                        date,
+                        page,
+                        page_size,
+                    },
+            } => {
+                assert_eq!(r#type.as_str(), "transactional");
+                assert_eq!(date, "2026-11-06");
+                assert_eq!(page, 1);
+                assert_eq!(page_size, 1000);
+            }
+            _ => panic!("comando inesperado"),
+        }
+    }
+
+    #[test]
+    fn parse_invoices_get_refund() {
+        let cli = Cli::try_parse_from(["pb", "invoices", "get-refund", "REFU_1"]).unwrap();
+        match cli.command {
+            Commands::Invoices {
+                action: InvoicesAction::GetRefund { refund_id },
+            } => assert_eq!(refund_id, "REFU_1"),
+            _ => panic!("comando inesperado"),
+        }
+    }
 }

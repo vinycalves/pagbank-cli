@@ -83,6 +83,33 @@ impl PagBankClient {
         self.handle_response(resp).await
     }
 
+    /// Envia um `multipart/form-data` (usado no envio de evidências de disputa).
+    pub async fn post_multipart(
+        &self,
+        service: Service,
+        path: &str,
+        form: reqwest::multipart::Form,
+        opts: &RequestOptions,
+    ) -> Result<reqwest::Response, PagBankError> {
+        let url = format!("{}{}", self.base_url(service), path);
+        let token = self.resolve_token(service)?;
+        let idempotency = opts
+            .idempotency_key
+            .clone()
+            .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+        let resp = self
+            .http
+            .post(&url)
+            .header("Authorization", &token)
+            .header("x-idempotency-key", &idempotency)
+            .header("Accept", "application/json")
+            .multipart(form)
+            .send()
+            .await?;
+        self.handle_response(resp).await
+    }
+
     pub async fn put(
         &self,
         service: Service,
@@ -110,6 +137,33 @@ impl PagBankClient {
         self.handle_response(resp).await
     }
 
+    pub async fn patch(
+        &self,
+        service: Service,
+        path: &str,
+        body: &serde_json::Value,
+        opts: &RequestOptions,
+    ) -> Result<reqwest::Response, PagBankError> {
+        let url = format!("{}{}", self.base_url(service), path);
+        let token = self.resolve_token(service)?;
+        let idempotency = opts
+            .idempotency_key
+            .clone()
+            .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+        let resp = self
+            .http
+            .patch(&url)
+            .header("Authorization", &token)
+            .header("x-idempotency-key", &idempotency)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .json(body)
+            .send()
+            .await?;
+        self.handle_response(resp).await
+    }
+
     pub async fn delete(
         &self,
         service: Service,
@@ -121,6 +175,32 @@ impl PagBankClient {
             .http
             .delete(&url)
             .header("Authorization", &token)
+            .send()
+            .await?;
+        self.handle_response(resp).await
+    }
+
+    /// Faz um GET na API EDI usando autenticação Basic (`edi_user:edi_token`).
+    /// O EDI não usa Bearer token e não possui ambiente sandbox.
+    pub async fn get_edi(&self, path: &str) -> Result<reqwest::Response, PagBankError> {
+        let url = format!("{}{}", self.base_url(Service::Edi), path);
+        let user = self
+            .config
+            .edi_user
+            .as_deref()
+            .filter(|v| !v.is_empty())
+            .ok_or(PagBankError::NoEdiCredentials)?;
+        let token = self
+            .config
+            .edi_token
+            .as_deref()
+            .filter(|v| !v.is_empty())
+            .ok_or(PagBankError::NoEdiCredentials)?;
+        let resp = self
+            .http
+            .get(&url)
+            .basic_auth(user, Some(token))
+            .header("Accept", "application/json")
             .send()
             .await?;
         self.handle_response(resp).await
@@ -171,6 +251,18 @@ impl PagBankClient {
                 }
                 Ok(format!("Bearer {token}"))
             }
+            Service::Transfer => {
+                let token = self
+                    .config
+                    .transfer_token
+                    .as_deref()
+                    .unwrap_or(&self.config.token);
+                if token.is_empty() {
+                    return Err(PagBankError::NoTransferToken);
+                }
+                Ok(format!("Bearer {token}"))
+            }
+            Service::Edi => Err(PagBankError::NoEdiCredentials),
             _ => {
                 if self.config.token.is_empty() {
                     return Err(PagBankError::NoToken);
@@ -254,6 +346,9 @@ mod tests {
                 environment: Environment::Sandbox,
                 token: token.to_string(),
                 recurring_token: recurring.map(String::from),
+                transfer_token: None,
+                edi_user: None,
+                edi_token: None,
                 client_id: None,
                 client_secret: None,
             },
@@ -293,6 +388,31 @@ mod tests {
         assert!(matches!(
             c.resolve_token(Service::Recurring),
             Err(PagBankError::NoRecurringToken)
+        ));
+    }
+
+    #[test]
+    fn resolve_token_transfer_uses_own() {
+        let mut c = client_with("main", None);
+        c.config.transfer_token = Some("transfer".to_string());
+        assert_eq!(
+            c.resolve_token(Service::Transfer).unwrap(),
+            "Bearer transfer"
+        );
+    }
+
+    #[test]
+    fn resolve_token_transfer_falls_back_to_main() {
+        let c = client_with("main", None);
+        assert_eq!(c.resolve_token(Service::Transfer).unwrap(), "Bearer main");
+    }
+
+    #[test]
+    fn resolve_token_transfer_missing() {
+        let c = client_with("", None);
+        assert!(matches!(
+            c.resolve_token(Service::Transfer),
+            Err(PagBankError::NoTransferToken)
         ));
     }
 
