@@ -45,8 +45,11 @@ jobs:
         env:
           TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
+          VERSION="${GITHUB_REF_NAME#v}"
           if [ -z "$TOKEN" ]; then
             echo "CARGO_REGISTRY_TOKEN não definido — pulando publish"
+          elif curl -fsS -A "pagbank-cli-release" "https://crates.io/api/v1/crates/pagbank-sdk/$VERSION" >/dev/null; then
+            echo "pagbank-sdk $VERSION já publicado — pulando"
           else
             cargo publish -p pagbank-sdk --token "$TOKEN"
           fi
@@ -68,8 +71,11 @@ jobs:
         env:
           TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
+          VERSION="${GITHUB_REF_NAME#v}"
           if [ -z "$TOKEN" ]; then
             echo "CARGO_REGISTRY_TOKEN não definido — pulando publish"
+          elif curl -fsS -A "pagbank-cli-release" "https://crates.io/api/v1/crates/pagbank-cli/$VERSION" >/dev/null; then
+            echo "pagbank-cli $VERSION já publicado — pulando"
           else
             # --allow-dirty porque cli/Cargo.toml é modificado pelo sed acima
             cargo publish -p pagbank-cli --allow-dirty --token "$TOKEN"
@@ -111,7 +117,7 @@ jobs:
           echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> "$GITHUB_ENV"
 
       - name: Build release
-        run: cargo build --release --target ${{ matrix.target }} -p pb
+        run: cargo build --release --target ${{ matrix.target }} -p pagbank-cli
 
       - name: Package binary
         shell: bash
@@ -137,7 +143,7 @@ jobs:
       - name: Install cargo-generate-rpm
         run: cargo install cargo-generate-rpm
       - name: Build .deb
-        run: cargo deb -p pb
+        run: cargo deb -p pagbank-cli
       - name: Build .rpm
         run: |
           cd cli && cargo generate-rpm
@@ -168,10 +174,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ steps.vars.outputs.tag }}" \
-            --title "${{ steps.vars.outputs.tag }}" \
-            --notes "Release ${{ steps.vars.outputs.tag }}" \
-            --generate-notes
+          TAG="${{ steps.vars.outputs.tag }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG já existe; seguindo para o upload dos assets."
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "Release $TAG" \
+              --generate-notes
+          fi
 
   upload:
     needs: create-release
@@ -215,7 +226,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          find ./assets -type f -name "*.deb" -o -name "*.rpm" | while read -r f; do
+          find ./assets -type f \( -name "*.deb" -o -name "*.rpm" \) | while read -r f; do
             gh release upload "${{ needs.create-release.outputs.tag }}" "$f" --clobber
           done
 
@@ -233,9 +244,10 @@ jobs:
           for arch in x86_64 aarch64; do
             url="https://github.com/${{ github.repository }}/releases/download/${TAG}/pb-${arch}-unknown-linux-gnu.tar.gz"
             sha=$(curl -sL "$url" | sha256sum | cut -d' ' -f1)
-            sed -i "s/__SHA256SUM_$(echo $arch | tr 'a-z' 'A-Z')__/$sha/" dist/aur/PKGBUILD
+            key=$(echo $arch | tr 'a-z' 'A-Z')
+            sed -i "s/__SHA256SUM_${key}__/$sha/" dist/aur/PKGBUILD dist/aur/.SRCINFO
           done
-          sed -i "s/__VERSION__/$VERSION/" dist/aur/PKGBUILD
+          sed -i "s/__VERSION__/$VERSION/" dist/aur/PKGBUILD dist/aur/.SRCINFO
 
       - name: Push to AUR
         env:
@@ -250,12 +262,12 @@ jobs:
           chmod 600 ~/.ssh/aur
           printf "Host aur.archlinux.org\n  StrictHostKeyChecking accept-new\n" > ~/.ssh/config
           git clone "ssh://aur@aur.archlinux.org/pagbank-cli-bin.git" /tmp/aur-repo
-          cp dist/aur/PKGBUILD /tmp/aur-repo/
+          cp dist/aur/PKGBUILD dist/aur/.SRCINFO /tmp/aur-repo/
           cd /tmp/aur-repo
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git diff --quiet || {
-            git add PKGBUILD .SRCINFO 2>/dev/null || git add PKGBUILD
+            git add PKGBUILD .SRCINFO
             git commit -m "Update pagbank-cli-bin to v$VERSION"
             git push
           }
