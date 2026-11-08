@@ -53,16 +53,26 @@ for crate in pagbank-sdk pagbank-cli; do
   fi
 done
 
-# --- AUR (o RPC pode ficar em cache por alguns minutos) ---
+# --- AUR (lê o repositório git, que não tem o cache do RPC) ---
 AUR_VERSION=""
-for _ in 1 2 3 4 5 6; do
-  AUR_VERSION=$(curl -fsSL -A "$UA" "https://aur.archlinux.org/rpc/v5/info?arg[]=$AUR_PKG" 2>/dev/null \
-    | jq -r '.results[0].Version // empty')
-  case "$AUR_VERSION" in
-    "$VERSION"-*) break ;;
-  esac
-  sleep 15
-done
+AUR_TMP="$(mktemp -d)"
+if git clone -q --depth 1 "https://aur.archlinux.org/$AUR_PKG.git" "$AUR_TMP" 2>/dev/null; then
+  AUR_VERSION=$(awk -F' = ' '/^[[:space:]]*pkgver = /{print $2; exit}' "$AUR_TMP/.SRCINFO")
+fi
+rm -rf "$AUR_TMP"
+
+# Fallback para o RPC, caso o clone falhe.
+if [ -z "$AUR_VERSION" ]; then
+  for _ in 1 2 3 4 5 6; do
+    AUR_VERSION=$(curl -fsSL -A "$UA" "https://aur.archlinux.org/rpc/v5/info?arg[]=$AUR_PKG" 2>/dev/null \
+      | jq -r '.results[0].Version // empty')
+    case "$AUR_VERSION" in
+      "$VERSION"-*) break ;;
+    esac
+    sleep 15
+  done
+fi
+
 if [ -n "$AUR_VERSION" ] && [ "${AUR_VERSION%%-*}" = "$VERSION" ]; then
   ok "AUR $AUR_PKG $AUR_VERSION"
 else
